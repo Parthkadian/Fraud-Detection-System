@@ -1,12 +1,4 @@
 # =========================
-# Python
-# =========================
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# =========================
 # Virtual Environment
 # =========================
 venv/
@@ -25,14 +17,17 @@ logs/
 *.log
 
 # =========================
-# Data (optional if large)
+# Data (optional - keep if large)
 # =========================
 data/
 
 # =========================
-# Models (if large)
+# Python Cache
 # =========================
-models/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
 # =========================
 # Jupyter Notebooks
@@ -46,7 +41,7 @@ models/
 Thumbs.db
 
 # =========================
-# IDE
+# IDE / Editor
 # =========================
 .vscode/
 .idea/
@@ -55,3 +50,24 @@ Thumbs.db
 # Docker
 # =========================
 *.tar
+*.gz
+
+# =========================
+# Build / Distribution
+# =========================
+build/
+dist/
+*.egg-info/
+
+# =========================
+# Testing / Coverage
+# =========================
+.coverage
+htmlcov/
+
+# =========================
+# IMPORTANT
+# =========================
+# DO NOT IGNORE MODELS ❌
+# (we need them for deployment)
+# models/  ← removed intentionally
