@@ -1,4 +1,8 @@
 fastapi
 uvicorn[standard]
 pydantic
-scikit-learn   # or your model libs
+pandas
+scikit-learn
+shap
+joblib
+numpy
