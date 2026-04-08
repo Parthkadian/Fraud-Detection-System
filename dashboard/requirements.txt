@@ -1,4 +1,5 @@
 streamlit
-requests
 pandas
-plotly
+requests
+matplotlib
+scikit-learn
