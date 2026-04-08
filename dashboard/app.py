@@ -19,17 +19,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
-IS_DOCKER = os.getenv("DOCKER_ENV", "0") == "1"
-
-
-def open_browser():
-    webbrowser.open_new("http://localhost:8501")
-
-
-if os.getenv("OPEN_BROWSER") == "1":
-    threading.Timer(2, open_browser).start()
-
+API_BASE_URL = os.getenv(
+    "API_BASE_URL",
+    "https://fraud-api-71v5.onrender.com"
+)
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "dark"
 
