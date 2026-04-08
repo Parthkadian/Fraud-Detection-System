@@ -1,0 +1,30 @@
+project:
+  name: "fraud_detection_system"
+  version: "1.0.0"
+  random_state: 42
+  target_column: "Class"
+
+paths:
+  raw_data: "data/raw/creditcard.csv"
+  processed_data_dir: "data/processed"
+  model_dir: "models/trained"
+  artifact_dir: "models/artifacts"
+  log_file: "logs/app.log"
+  metrics_file: "models/artifacts/metrics.json"
+  threshold_file: "models/trained/threshold.json"
+
+split:
+  test_size: 0.15
+  valid_size: 0.15
+
+training:
+  model_name: "xgboost"
+  threshold_metric: "f1"
+  default_threshold: 0.5
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+
+dashboard:
+  title: "Fraud Detection Dashboard"
