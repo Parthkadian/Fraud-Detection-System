@@ -6,4 +6,4 @@ scikit-learn
 shap
 joblib
 numpy
-xgboost
+xgboost==2.0.3
