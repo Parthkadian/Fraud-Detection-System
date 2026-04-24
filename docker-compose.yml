@@ -25,3 +25,24 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+
+  redis:
+    image: "redis:alpine"
+    container_name: fraud_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  celery_worker:
+    build: .
+    container_name: fraud_celery_worker
+    command: celery -A api.celery_worker.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - redis
+      - api
+    restart: unless-stopped

@@ -9,17 +9,22 @@ env/
 # Environment Variables
 # =========================
 .env
+.env.*
 
 # =========================
-# Logs
+# Logs & Runtime Files
 # =========================
 logs/
 *.log
+*.db          # SQLite audit database (contains prediction data)
+audit_log.db
 
 # =========================
-# Data (optional - keep if large)
+# Data (large CSVs excluded)
 # =========================
-data/
+data/raw/
+data/interim/
+*.csv
 
 # =========================
 # Python Cache
@@ -30,7 +35,7 @@ __pycache__/
 *.pyd
 
 # =========================
-# Jupyter Notebooks
+# Jupyter Checkpoints
 # =========================
 .ipynb_checkpoints/
 
@@ -47,7 +52,7 @@ Thumbs.db
 .idea/
 
 # =========================
-# Docker
+# Docker artifacts
 # =========================
 *.tar
 *.gz
@@ -64,10 +69,20 @@ dist/
 # =========================
 .coverage
 htmlcov/
+.pytest_cache/
 
 # =========================
-# IMPORTANT
+# MLflow Runs (can be large)
 # =========================
-# DO NOT IGNORE MODELS ❌
-# (we need them for deployment)
-# models/  ← removed intentionally
+mlruns/
+
+# =========================
+# Generated Reports
+# =========================
+reports/*.html
+reports/*.json
+
+# =========================
+# NOTE: Models ARE included
+# =========================
+# models/ is intentionally tracked so deployment works out of the box

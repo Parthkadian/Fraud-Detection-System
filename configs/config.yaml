@@ -1,6 +1,6 @@
 project:
   name: "fraud_detection_system"
-  version: "1.0.0"
+  version: "2.0.0"
   random_state: 42
   target_column: "Class"
 
@@ -21,6 +21,16 @@ training:
   model_name: "xgboost"
   threshold_metric: "f1"
   default_threshold: 0.5
+
+feature_engineering:
+  nlp_components: 5
+  tfidf_max_features: 100
+  outlier_iqr_factor: 3.0
+
+monitoring:
+  drift_report_dir: "reports"
+  alert_fraud_rate_threshold: 0.05
+  alert_high_risk_threshold: 0.10
 
 api:
   host: "0.0.0.0"

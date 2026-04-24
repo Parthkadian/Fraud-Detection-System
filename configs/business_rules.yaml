@@ -1,0 +1,62 @@
+# Business Rules Configuration
+# ==============================
+# Hard rules layered on top of the ML model.
+# Rules are evaluated AFTER the ML score.
+# If a rule fires, it can OVERRIDE the ML prediction.
+#
+# Schema per rule:
+#   name        : str  — display name
+#   description : str  — human-readable explanation
+#   condition   : str  — Python expression (evaluated safely)
+#   action      : "flag" | "override_high" | "pass"
+#   severity    : "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
+#   active      : bool — easy on/off toggle
+
+rules:
+  - name: "Large Amount Threshold"
+    description: "Transactions above £5,000 are always escalated for review regardless of model score"
+    field: "Amount"
+    operator: ">"
+    value: 5000.0
+    action: "override_high"
+    severity: "HIGH"
+    active: true
+
+  - name: "Suspicious Night Transaction"
+    description: "Transactions between midnight and 4AM with amount > £500 are flagged"
+    field: "is_night_transaction"
+    operator: "=="
+    value: 1
+    secondary_field: "Amount"
+    secondary_operator: ">"
+    secondary_value: 500.0
+    action: "flag"
+    severity: "MEDIUM"
+    active: true
+
+  - name: "Extreme PCA Anomaly"
+    description: "If any V-feature magnitude indicates extreme deviation (>10 std), flag immediately"
+    field: "v_features_magnitude"
+    operator: ">"
+    value: 15.0
+    action: "flag"
+    severity: "HIGH"
+    active: true
+
+  - name: "Micro Transaction Spam"
+    description: "Unusually small amounts (< £0.50) may indicate card testing"
+    field: "Amount"
+    operator: "<"
+    value: 0.5
+    action: "flag"
+    severity: "MEDIUM"
+    active: true
+
+  - name: "Maximum Amount Cap"
+    description: "Transactions above £25,000 are always treated as CRITICAL"
+    field: "Amount"
+    operator: ">"
+    value: 25000.0
+    action: "override_high"
+    severity: "CRITICAL"
+    active: true

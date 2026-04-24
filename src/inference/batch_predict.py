@@ -29,7 +29,7 @@ class BatchPredictor:
         if "Class" in input_df.columns:
             input_df = input_df.drop(columns=["Class"])
 
-        input_df = self.fe.transform(input_df)
+        input_df = self.fe.transform(input_df, is_train=False)
 
         for col in self.feature_order:
             if col not in input_df.columns:
