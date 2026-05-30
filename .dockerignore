@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+notebooks/
+logs/
+reports/
+data/raw/

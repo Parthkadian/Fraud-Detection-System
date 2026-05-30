@@ -1,0 +1,32 @@
+# XGBoost — conservative regularisation for real-world fraud detection.
+# max_depth=3 and strong L1/L2 penalties prevent memorising PCA artefacts;
+# subsample + colsample add stochastic regularisation.
+xgboost:
+  n_estimators: 200
+  max_depth: 3          # shallower trees → less overfitting
+  learning_rate: 0.02   # lower LR → more robust generalisation
+  subsample: 0.7        # row subsampling (stochastic regularisation)
+  colsample_bytree: 0.7 # feature subsampling per tree
+  reg_alpha: 2.0        # L1 sparsity penalty
+  reg_lambda: 10.0      # L2 weight penalty
+  min_child_weight: 10  # require more samples per leaf
+  gamma: 0.5            # min loss reduction to split a node
+  objective: "binary:logistic"
+  eval_metric: "logloss"
+  random_state: 42
+  n_jobs: -1
+
+logistic_regression:
+  C: 0.5
+  max_iter: 1000
+  class_weight: "balanced"
+  solver: "liblinear"
+  random_state: 42
+
+random_forest:
+  n_estimators: 200
+  max_depth: 10
+  min_samples_leaf: 5
+  class_weight: "balanced"
+  random_state: 42
+  n_jobs: -1

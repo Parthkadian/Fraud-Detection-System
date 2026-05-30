@@ -1,0 +1,116 @@
+# =========================
+# Virtual Environment
+# =========================
+venv/
+env/
+.venv/
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+
+# =========================
+# Logs & Runtime Files
+# =========================
+logs/
+*.log
+*.db          # SQLite audit database (contains prediction data)
+audit_log.db
+
+# =========================
+# Data (large CSVs excluded)
+# =========================
+data/raw/
+data/interim/
+*.csv
+
+# =========================
+# Python Cache
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# =========================
+# Jupyter Checkpoints
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# Docker artifacts
+# =========================
+*.tar
+*.gz
+
+# =========================
+# Build / Distribution
+# =========================
+build/
+dist/
+*.egg-info/
+
+# =========================
+# Testing / Coverage
+# =========================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# =========================
+# MLflow Runs (can be large)
+# =========================
+mlruns/
+
+# =========================
+# Generated Reports
+# =========================
+reports/*.html
+reports/*.json
+
+# =========================
+# NOTE: Models ARE included
+# =========================
+# models/ is intentionally tracked so deployment works out of the box
+
+# =========================
+# Next.js Frontend
+# =========================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/.env.production
+
+# =========================
+# PostgreSQL local data
+# =========================
+postgres_data/
+
+# =========================
+# Coverage reports
+# =========================
+coverage.xml
+
+# =========================
+# Push scripts & installers
+# =========================
+push_to_github.py
+Git-installer.exe
+PortableGit.exe
+D:/PortableGit/
+
