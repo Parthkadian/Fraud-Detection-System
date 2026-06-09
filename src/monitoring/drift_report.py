@@ -5,11 +5,8 @@ Helper functions for generating and formatting Evidently drift reports.
 Used by both the API endpoint and the dashboard's drift monitoring tab.
 """
 
-import os
 import logging
-from typing import Optional
 
-import pandas as pd
 
 logger = logging.getLogger("fraud_detection_logger")
 

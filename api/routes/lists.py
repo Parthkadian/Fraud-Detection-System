@@ -22,7 +22,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.middleware import verify_api_key
-from api.schemas import ListEntityRequest, ListEntityResponse
+from api.schemas import ListEntityRequest
 import api.database as db
 
 logger = logging.getLogger("fraud_detection_logger")

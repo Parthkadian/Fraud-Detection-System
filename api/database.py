@@ -31,7 +31,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Generator, List, Optional
+from typing import Any, Generator, Optional
 
 logger = logging.getLogger("fraud_detection_logger")
 

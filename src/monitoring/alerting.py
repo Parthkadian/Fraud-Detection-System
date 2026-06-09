@@ -8,7 +8,6 @@ logs alerts, and maintains an in-memory alert history.
 
 import logging
 from datetime import datetime, timezone
-from typing import Optional
 
 import pandas as pd
 

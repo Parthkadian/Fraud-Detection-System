@@ -32,8 +32,6 @@ Features
 
 from contextlib import asynccontextmanager
 import logging
-import os
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -43,7 +41,6 @@ from api.middleware import (
     RequestTimingMiddleware,
     RateLimitMiddleware,
 )
-from api.schemas import HealthResponse
 from src.inference.predict import FraudPredictor
 from src.inference.batch_predict import BatchPredictor
 from src.explainability.shap_explainer import ShapExplainer

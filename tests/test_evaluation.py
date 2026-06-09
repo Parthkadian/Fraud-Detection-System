@@ -4,10 +4,8 @@ Tests — Evaluation
 Tests for the ModelEvaluator class.
 """
 
-import pytest
 import numpy as np
 import json
-import tempfile
 from pathlib import Path
 
 from src.evaluation.evaluate import ModelEvaluator

@@ -23,7 +23,6 @@ model_info : Info
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 logger = logging.getLogger("fraud_detection_logger")
 
@@ -36,7 +35,6 @@ try:
         Info,
         generate_latest,
         CONTENT_TYPE_LATEST,
-        CollectorRegistry,
         REGISTRY,
     )
     _PROMETHEUS_AVAILABLE = True
@@ -111,7 +109,7 @@ class FraudMetrics:
         prediction: int,
         fraud_probability: float,
         latency_seconds: float,
-        rule_name: Optional[str] = None,
+        rule_name: str | None = None,
     ) -> None:
         """Update all metrics for one prediction event."""
         if not self.available:
@@ -147,7 +145,7 @@ class FraudMetrics:
 
 
 # Module-level singleton
-_metrics_instance: Optional[FraudMetrics] = None
+_metrics_instance: FraudMetrics | None = None
 
 
 def get_metrics(model_version: str = "2.0.0") -> FraudMetrics:

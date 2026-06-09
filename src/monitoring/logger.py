@@ -31,7 +31,6 @@ import logging.handlers
 import os
 import threading
 from datetime import datetime, timezone
-from typing import Optional
 
 # Thread-local store for correlation IDs
 _local = threading.local()

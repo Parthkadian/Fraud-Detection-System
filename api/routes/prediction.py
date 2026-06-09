@@ -18,8 +18,6 @@ Features added over the original main.py endpoints:
 from __future__ import annotations
 
 import logging
-import time
-import uuid
 from typing import Optional
 
 import pandas as pd

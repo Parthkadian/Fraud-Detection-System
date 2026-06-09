@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=28&pause=1000&color=C49A2E&center=true&vCenter=true&width=700&lines=🛡️+Fraud+Detection+System;Production+ML+%7C+Real-Time+Scoring;SHAP+%7C+Drift+Monitor+%7C+Async+Pipeline" alt="Typing SVG" />
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=28&pause=1000&color=C49A2E&center=true&vCenter=true&width=700&lines=%F0%9F%9B%A1%EF%B8%8F+Fraud+Detection+System;Production+ML+%7C+Real-Time+Scoring;SHAP+%7C+Drift+Monitor+%7C+Async+Pipeline" alt="Typing SVG" />
 
 # 🛡️ Enterprise Fraud Detection System
 
@@ -9,7 +9,7 @@
 <br/>
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-2.0-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![XGBoost](https://img.shields.io/badge/XGBoost-ML_Engine-FF6600?style=for-the-badge)](https://xgboost.readthedocs.io)
 [![SHAP](https://img.shields.io/badge/SHAP-Explainability-7C3AED?style=for-the-badge)](https://shap.readthedocs.io)
@@ -395,9 +395,11 @@ fraud-detection-system/
 │   ├── main.py                      # App factory, lifespan, middleware
 │   ├── schemas.py                   # 40+ Pydantic request/response models
 │   ├── middleware.py                # Request ID, timing, rate limiting
-│   ├── database.py                  # SQLite ORM + audit/case/alert tables
+│   ├── database.py                  # SQLite/PostgreSQL ORM + audit/case/alert tables
 │   ├── celery_worker.py             # Async Celery task definitions
 │   ├── router.py                    # Route aggregation
+│   ├── requirements.txt             # API-specific dependencies
+│   ├── dockerfile                   # API service Dockerfile
 │   └── routes/                      # 10 modular route files
 │       ├── prediction.py            # /predict, /predict_batch, /predict_async
 │       ├── explainability.py        # /explain, /explain/global
@@ -411,7 +413,12 @@ fraud-detection-system/
 │       └── model_ops.py             # /model/version, /model/performance
 │
 ├── 📂 dashboard/
-│   └── app.py                       # Streamlit dashboard (3,200+ lines)
+│   ├── app.py                       # Streamlit dashboard (3,200+ lines)
+│   ├── dockerfile                   # Dashboard service Dockerfile
+│   └── requirements.txt             # Dashboard-specific dependencies
+│
+├── 📂 docs/
+│   └── model_card.json              # Google Model Card (machine-readable)
 │
 ├── 📂 src/                          # Core ML + business logic
 │   ├── ingestion/
@@ -437,7 +444,8 @@ fraud-detection-system/
 │   │   ├── drift_detection.py       # Evidently AI drift reports
 │   │   ├── alerting.py              # Threshold-based alert engine
 │   │   └── logger.py                # Structured logging with rotation
-│   ├── rules/                       # Business rule engine
+│   ├── rules/
+│   │   └── rule_engine.py           # YAML-driven business rule engine
 │   └── utils/
 │       ├── common.py                # I/O helpers (joblib, JSON)
 │       ├── config_loader.py         # YAML config loader
@@ -445,7 +453,8 @@ fraud-detection-system/
 │
 ├── 📂 configs/
 │   ├── config.yaml                  # Project-wide configuration
-│   └── model_params.yaml            # XGBoost hyperparameters
+│   ├── model_params.yaml            # XGBoost hyperparameters
+│   └── business_rules.yaml          # YAML-defined business rules
 │
 ├── 📂 tests/                        # Comprehensive test suite
 │   ├── conftest.py                  # Shared fixtures
@@ -454,7 +463,8 @@ fraud-detection-system/
 │   ├── test_preprocessing.py
 │   ├── test_training.py
 │   ├── test_evaluation.py
-│   └── test_inference.py
+│   ├── test_inference.py
+│   └── test_transformer.py          # Feature transformer pipeline tests
 │
 ├── 📂 notebooks/
 │   └── generate_eda.py              # EDA visualisation generator
@@ -467,16 +477,19 @@ fraud-detection-system/
 │       └── data_schema.yaml         # Formal column schema definition
 │
 ├── 📂 models/
-│   └── artifacts/                   # xgboost_model.json, scaler.pkl, metrics.json
+│   ├── artifacts/                   # xgboost_model.json, scaler.pkl, metrics.json
+│   └── trained/                     # Versioned trained model checkpoints
 │
 ├── 📂 reports/figures/              # EDA visualisation outputs
 ├── 📂 logs/                         # Structured application logs
 ├── 📂 .github/workflows/            # CI/CD pipeline (lint + test + Docker)
 │
-├── docker-compose.yml               # API + Redis + Celery worker orchestration
-├── Dockerfile                       # Production container (multi-stage)
+├── docker-compose.yml               # Full stack: API + PostgreSQL + Redis + Celery + Frontend
+├── Dockerfile                       # Production API container
 ├── requirements.txt                 # Python dependencies
 ├── run_pipeline.py                  # One-command pipeline runner (CLI)
+├── test_predict.py                  # Standalone prediction smoke test
+├── push_to_github.py                # Git automation helper script
 ├── railway.toml                     # Railway.app deployment config
 ├── CONTRIBUTING.md                  # Developer contribution guide
 └── README.md                        # This file
@@ -519,7 +532,15 @@ data/raw/creditcard.csv
 ### 3. Train the Model
 
 ```bash
+# Default — runs full pipeline with XGBoost
 python run_pipeline.py
+
+# Specify a different model
+python run_pipeline.py --model logistic_regression
+python run_pipeline.py --model random_forest
+
+# Skip cross-validation for faster iteration
+python run_pipeline.py --skip-cv
 ```
 
 This runs the full pipeline:
@@ -551,7 +572,7 @@ streamlit run dashboard/app.py
 
 ## 🐳 Docker Deployment
 
-### Full Stack (API + Dashboard + Redis + Celery)
+### Full Stack (API + PostgreSQL + Redis + Celery + Frontend)
 
 ```bash
 docker-compose up --build
@@ -562,22 +583,32 @@ This launches:
 | Service | Port | Description |
 |---------|------|-------------|
 | **API** | `8000` | FastAPI REST service |
-| **Dashboard** | `8501` | Streamlit analytics UI |
+| **Frontend** | `3000` | Next.js analytics UI |
+| **PostgreSQL** | `5432` | Production database |
 | **Redis** | `6379` | Celery message broker |
 | **Celery Worker** | — | Async prediction worker |
+
+> [!NOTE]
+> The **Streamlit dashboard** (`dashboard/app.py`) is designed for local development and is run separately (see [Quick Start](#-quick-start)). The Docker Compose stack uses a **Next.js frontend** (`frontend/`) for the containerised deployment.
 
 ### Environment Variables
 
 ```bash
 # API
-FRAUD_API_KEY=your-secret-key      # Enable API authentication (production)
-API_BASE_URL=http://localhost:8000  # Dashboard → API URL
+FRAUD_API_KEY=your-secret-key           # Enable API authentication (production)
+API_BASE_URL=http://localhost:8000       # Dashboard → API URL
+RATE_LIMIT_PER_MINUTE=120               # API rate limiting
 
 # Database
-DATABASE_URL=postgresql://...      # Production (defaults to SQLite)
+DATABASE_URL=postgresql://fraud:fraud@postgres:5432/fraud_db   # Production PostgreSQL
+# Omit DATABASE_URL to use SQLite for local development
 
-# Redis
+# Redis / Celery
 CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+# Frontend
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ---
@@ -687,6 +718,7 @@ pytest tests/test_inference.py -v
 | `test_training.py` | CV training, early stopping, model save/load |
 | `test_evaluation.py` | All metrics, serialisation, edge cases |
 | `test_inference.py` | Risk level logic, SHAP output format, batch |
+| `test_transformer.py` | Feature engineering transformer pipeline |
 
 ---
 
@@ -701,12 +733,12 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 ```bash
 # Install dev dependencies
 pip install -r requirements.txt
-pip install black isort flake8 pytest pytest-cov
 
 # Format code
 black . && isort .
 
-# Lint
+# Lint (ruff is the primary linter; flake8 also supported)
+ruff check src/ api/ dashboard/
 flake8 src/ api/ dashboard/ --max-line-length 100
 
 # Run tests before PR

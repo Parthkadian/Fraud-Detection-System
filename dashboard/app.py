@@ -1,7 +1,5 @@
 import sys
 import os
-import webbrowser
-import threading
 import time
 from datetime import datetime, timezone
 
@@ -91,14 +89,14 @@ FEATURE_STATS = {
     "Time":   (0.0, 172800.0),
 }
 
-import streamlit as st
-import pandas as pd
-import requests
-import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve, auc, precision_recall_curve, confusion_matrix
+import streamlit as st  # noqa: E402
+import pandas as pd  # noqa: E402
+import requests  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
+from sklearn.metrics import roc_curve, auc, precision_recall_curve, confusion_matrix  # noqa: E402
 
 st.set_page_config(
-    page_title="Enterprise Fraud Detection Dashboard",
+    page_title="Highland Fraud Shield | Enterprise Risk Workspace",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -115,73 +113,73 @@ if "theme_mode" not in st.session_state:
 def get_theme_tokens(mode: str):
     if mode == "light":
         return {
-            "text": "#0F172A",
-            "muted": "rgba(15,23,42,0.72)",
-            "card": "rgba(255,255,255,0.90)",
-            "card_border": "rgba(15,23,42,0.12)",
-            "sidebar": "rgba(248,250,252,0.95)",
-            "sidebar_border": "rgba(15,23,42,0.12)",
-            "input_bg": "rgba(255,255,255,1)",
-            "input_border": "rgba(15,23,42,0.15)",
-            "tab_bg": "rgba(15,23,42,0.03)",
-            "accent1": "rgba(0, 86, 59, 0.15)",
-            "accent2": "rgba(212, 175, 55, 0.15)",
-            "hero_bg": "linear-gradient(135deg, #FFFFFF, #F1F5F9)",
-            "hero_shadow": "0 10px 40px rgba(15,23,42,0.08)",
+            "text": "#0B1B13", # Deep forest black/green
+            "muted": "#4A5D52",
+            "card": "rgba(255, 254, 250, 0.95)", # Warm cream
+            "card_border": "rgba(170, 124, 17, 0.15)", # Brass border
+            "sidebar": "#F5F2EA", # Sandy beach/heather linen
+            "sidebar_border": "rgba(170, 124, 17, 0.15)",
+            "input_bg": "#FFFFFF",
+            "input_border": "rgba(170, 124, 17, 0.25)",
+            "tab_bg": "#ECE7DA",
+            "accent1": "rgba(0, 86, 59, 0.12)", # Highland green
+            "accent2": "rgba(125, 91, 140, 0.12)", # Thistle purple
+            "hero_bg": "linear-gradient(135deg, #FCFAF5 0%, #F5F2EA 100%)",
+            "hero_shadow": "0 10px 30px rgba(170,124,17,0.05)",
             "body_gradient": """
-                radial-gradient(circle at 10% 15%, rgba(0, 86, 59, 0.04), transparent 25%),
-                radial-gradient(circle at 85% 12%, rgba(212, 175, 55, 0.05), transparent 25%),
-                linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%)
+                radial-gradient(circle at 10% 15%, rgba(0, 86, 59, 0.04), transparent 30%),
+                radial-gradient(circle at 85% 12%, rgba(125, 91, 140, 0.04), transparent 30%),
+                linear-gradient(180deg, #FAF8F2 0%, #EFEBE0 100%)
             """,
-            "chip_text": "#0F172A",
-            "button_text": "#12151F",
-            "button_grad": "linear-gradient(90deg, #C49A2E, #B8860B)",
-            "button_grad_hover": "linear-gradient(90deg, #00563B, #00402C)",
-            "kpi_text": "#003366",
-            "skeleton_text": "rgba(15,23,42,0.70)",
-            "skeleton_line": "rgba(15,23,42,0.10)",
-            "skeleton_glow": "rgba(255,255,255,0.55)",
-            "mpl_text": "#0F172A",
-            "mpl_muted": "#475569",
-            "mpl_grid": "#CBD5E1",
-            "mpl_spine": "#CBD5E1",
+            "chip_text": "#8F6B10",
+            "button_text": "#FAF8F2",
+            "button_grad": "linear-gradient(90deg, #00563B, #003F2A)", # Deep forest green
+            "button_grad_hover": "linear-gradient(90deg, #006C4A, #00563B)",
+            "kpi_text": "#00563B",
+            "skeleton_text": "rgba(11, 27, 19, 0.7)",
+            "skeleton_line": "rgba(11, 27, 19, 0.08)",
+            "skeleton_glow": "rgba(0, 86, 59, 0.08)",
+            "mpl_text": "#0B1B13",
+            "mpl_muted": "#4A5D52",
+            "mpl_grid": "#ECE7DA",
+            "mpl_spine": "#ECE7DA",
         }
 
     return {
-        "text": "#F0ECF8",
-        "muted": "#B0AABF",
-        "card": "#242A3D",
-        "card_border": "rgba(196, 154, 46, 0.10)",
-        "sidebar": "#12151F",
-        "sidebar_border": "rgba(196, 154, 46, 0.14)",
-        "input_bg": "#1A1F2E",
-        "input_border": "rgba(196, 154, 46, 0.16)",
-        "tab_bg": "#242A3D",
-        "accent1": "rgba(196, 154, 46, 0.18)",  
-        "accent2": "rgba(168, 118, 190, 0.18)",      
+        "text": "#E2E8F0", # Light gray blue
+        "muted": "#94A3B8",
+        "card": "#0F2117", # Very dark forest green
+        "card_border": "rgba(212, 175, 55, 0.14)", # Warm gold/brass border
+        "sidebar": "#07120C", # Pitch black forest green
+        "sidebar_border": "rgba(212, 175, 55, 0.18)",
+        "input_bg": "#142B1F",
+        "input_border": "rgba(212, 175, 55, 0.20)",
+        "tab_bg": "#12281D",
+        "accent1": "rgba(0, 120, 80, 0.22)", # Highlands green
+        "accent2": "rgba(125, 91, 140, 0.22)", # Thistle purple
         "hero_bg": """
-            linear-gradient(135deg, #242A3D 0%, #1A1F2E 100%),
-            radial-gradient(circle at 18% 16%, rgba(196, 154, 46, 0.08), transparent 42%),
-            radial-gradient(circle at 82% 28%, rgba(168, 118, 190, 0.10), transparent 45%)
+            linear-gradient(135deg, #0F2117 0%, #07120C 100%),
+            radial-gradient(circle at 18% 16%, rgba(212, 175, 55, 0.08), transparent 42%),
+            radial-gradient(circle at 82% 28%, rgba(125, 91, 140, 0.10), transparent 45%)
         """,
-        "hero_shadow": "0 10px 40px rgba(0,0,0,0.40)",
+        "hero_shadow": "0 15px 40px rgba(0,0,0,0.55)",
         "body_gradient": """
-            radial-gradient(circle at 12% 10%, rgba(196, 154, 46, 0.035), transparent 26%),
-            radial-gradient(circle at 86% 14%, rgba(168, 118, 190, 0.050), transparent 28%),
-            linear-gradient(180deg, #1A1F2E 0%, #171B29 100%)
+            radial-gradient(circle at 12% 10%, rgba(0, 120, 80, 0.04), transparent 28%),
+            radial-gradient(circle at 86% 14%, rgba(125, 91, 140, 0.06), transparent 28%),
+            linear-gradient(180deg, #0B1711 0%, #050B08 100%)
         """,
-        "chip_text": "#C49A2E",
-        "button_text": "#12151F",
-        "button_grad": "linear-gradient(90deg, #C49A2E, #B8860B)",
-        "button_grad_hover": "linear-gradient(90deg, #D4A62A, #C49A2E)",
-        "kpi_text": "#C49A2E",
-        "skeleton_text": "rgba(255,255,255,0.5)",
-        "skeleton_line": "rgba(255,255,255,0.05)",
-        "skeleton_glow": "rgba(212, 175, 55, 0.12)",
-        "mpl_text": "#F0ECF8",
-        "mpl_muted": "#B0AABF",
-        "mpl_grid": "#2E3654",
-        "mpl_spine": "#2E3654",
+        "chip_text": "#D4AF37",
+        "button_text": "#07120C",
+        "button_grad": "linear-gradient(90deg, #D4AF37, #AA7C11)", # Warm brass/gold
+        "button_grad_hover": "linear-gradient(90deg, #E5C158, #D4AF37)",
+        "kpi_text": "#D4AF37",
+        "skeleton_text": "rgba(255,255,255,0.45)",
+        "skeleton_line": "rgba(255,255,255,0.04)",
+        "skeleton_glow": "rgba(212, 175, 55, 0.10)",
+        "mpl_text": "#E2E8F0",
+        "mpl_muted": "#94A3B8",
+        "mpl_grid": "#193526",
+        "mpl_spine": "#193526",
     }
 
 
@@ -203,10 +201,15 @@ api_health_state, api_health_label, api_health_dot = get_api_health()
 st.markdown(
     f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap');
 
 html, body, [class*="css"] {{
     font-family: 'Inter', sans-serif;
+}}
+
+.syne {{
+    font-family: 'Playfair Display', serif !important;
+    font-weight: 800 !important;
 }}
 
 .stApp {{
@@ -245,6 +248,7 @@ html, body, [class*="css"] {{
     -webkit-backdrop-filter: blur(14px);
     border-radius: 24px;
     padding: 24px;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.25s ease;
 }}
 
 .hero-card {{
@@ -254,6 +258,18 @@ html, body, [class*="css"] {{
     border-radius: 28px;
     padding: 30px 32px;
     margin-bottom: 18px;
+    animation: fadeSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) both;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}}
+
+.hero-accent-line {{
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #C49A2E, #A876BE, #C49A2E);
+    background-size: 200% 100%;
+    animation: gradientShift 3s linear infinite;
+    margin: 18px 0 0 0;
+    opacity: 0.75;
 }}
 
 .info-chip {{
@@ -269,18 +285,24 @@ html, body, [class*="css"] {{
 }}
 
 .metric-mini {{
-    background: {theme["card"]};
+    background: linear-gradient(135deg, {theme["card"]} 0%, rgba(196,154,46,0.06) 100%);
     border: 1px solid {theme["card_border"]};
     border-radius: 22px;
     padding: 18px 18px 14px 18px;
     min-height: 105px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.25s ease;
+    animation: fadeSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) both;
 }}
+
+.metric-mini:nth-child(2) {{ animation-delay: 0.08s; }}
+.metric-mini:nth-child(3) {{ animation-delay: 0.16s; }}
 
 .metric-mini h3 {{
     margin: 0;
     font-size: 1.9rem;
     font-weight: 800;
+    font-family: 'Playfair Display', serif;
     color: {theme["kpi_text"]};
 }}
 
@@ -288,6 +310,12 @@ html, body, [class*="css"] {{
     margin: 8px 0 0 0;
     color: {theme["muted"]};
     font-size: 0.92rem;
+}}
+
+.metric-mini .kpi-icon-sm {{
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+    display: block;
 }}
 
 .section-title {{
@@ -393,7 +421,7 @@ html, body, [class*="css"] {{
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 14px;
+    padding: 6px 12px;
     border-radius: 999px;
     font-size: 0.82rem;
     font-weight: 700;
@@ -698,11 +726,29 @@ html, body, [class*="css"] {{
     border: 1px solid {theme["card_border"]};
     background: {theme["button_grad"]};
     color: {theme["button_text"]};
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+}}
+
+.stButton > button::after, .stDownloadButton > button::after {{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+}}
+
+.stButton > button:hover::after, .stDownloadButton > button:hover::after {{
+    transform: translateX(100%);
 }}
 
 .stButton > button:hover, .stDownloadButton > button:hover {{
     border: 1px solid {theme["card_border"]};
     background: {theme["button_grad_hover"]};
+    box-shadow: 0 4px 20px rgba(196,154,46,0.35);
+    transform: translateY(-1px);
 }}
 
 div[data-baseweb="input"] > div,
@@ -736,12 +782,14 @@ textarea {{
 .kpi-card:hover,
 .chart-card:hover,
 .phase-card:hover,
-.top-toolbar:hover,
 .skeleton-analytics:hover {{
-    background: #2E3654;
-    transform: translateY(-2px);
-    transition: all 0.25s ease;
-    box-shadow: 0 14px 36px rgba(0,0,0,0.28);
+    transform: translateY(-3px);
+    box-shadow: 0 0 0 1.5px rgba(196,154,46,0.45), 0 16px 40px rgba(0,0,0,0.30);
+    border-color: rgba(196,154,46,0.35) !important;
+}}
+
+.top-toolbar:hover {{
+    box-shadow: 0 0 0 1px rgba(196,154,46,0.2), 0 8px 24px rgba(0,0,0,0.20);
 }}
 
 .hero-accent-gold {{
@@ -788,6 +836,136 @@ textarea {{
         transform: translateY(-2px);
     }}
 }}
+
+@keyframes fadeSlideUp {{
+    from {{
+        opacity: 0;
+        transform: translateY(22px);
+    }}
+    to {{
+        opacity: 1;
+        transform: translateY(0);
+    }}
+}}
+
+@keyframes gradientShift {{
+    0%   {{ background-position: 0% 50%; }}
+    50%  {{ background-position: 100% 50%; }}
+    100% {{ background-position: 0% 50%; }}
+}}
+
+@keyframes pulseDot {{
+    0%, 100% {{
+        box-shadow: 0 0 0 0 rgba(34,197,94,0.55);
+        opacity: 1;
+    }}
+    50% {{
+        box-shadow: 0 0 0 6px rgba(34,197,94,0);
+        opacity: 0.85;
+    }}
+}}
+
+@keyframes pulseDotAmber {{
+    0%, 100% {{
+        box-shadow: 0 0 0 0 rgba(245,158,11,0.55);
+    }}
+    50% {{
+        box-shadow: 0 0 0 6px rgba(245,158,11,0);
+    }}
+}}
+
+.dot-green {{
+    background: #22c55e;
+    animation: pulseDot 2s ease-in-out infinite;
+}}
+
+.phase-card {{
+    animation: fadeSlideUp 0.6s cubic-bezier(0.22,1,0.36,1) both;
+}}
+
+.phase-card:nth-child(2) {{ animation-delay: 0.1s; }}
+.phase-card:nth-child(3) {{ animation-delay: 0.2s; }}
+
+/* ── Premium Sidebar Nav ─────────────── */
+[data-testid="stSidebar"] .stRadio > div {{
+    gap: 3px;
+}}
+
+[data-testid="stSidebar"] .stRadio label {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: background 0.15s, border-left 0.15s;
+    border-left: 3px solid transparent;
+}}
+
+[data-testid="stSidebar"] .stRadio label:has(input:checked) {{
+    background: linear-gradient(90deg, rgba(196,154,46,0.18), rgba(168,118,190,0.10)) !important;
+    border-left: 3px solid #C49A2E !important;
+}}
+
+[data-testid="stSidebar"] .stRadio label:hover {{
+    background: rgba(196,154,46,0.08) !important;
+    border-left: 3px solid rgba(196,154,46,0.4) !important;
+}}
+
+/* ── Portfolio Card ─────────────────── */
+.portfolio-card {{
+    background: linear-gradient(135deg, rgba(196,154,46,0.10), rgba(168,118,190,0.08));
+    border: 1px solid rgba(196,154,46,0.22);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-top: 4px;
+}}
+
+.portfolio-name {{
+    font-family: 'Playfair Display', serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #C49A2E;
+}}
+
+.portfolio-sub {{
+    font-size: 0.75rem;
+    opacity: 0.65;
+    margin-top: 2px;
+}}
+
+.portfolio-link {{
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #A876BE;
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(168,118,190,0.12);
+    border: 1px solid rgba(168,118,190,0.22);
+    transition: background 0.2s;
+}}
+
+.portfolio-link:hover {{
+    background: rgba(168,118,190,0.22);
+}}
+
+/* ── Hero headline font ───────────────── */
+.hero-headline {{
+    font-family: 'Playfair Display', serif;
+    font-size: 3.6rem;
+    font-weight: 800;
+    line-height: 1.05;
+    margin-top: 10px;
+    letter-spacing: -0.02em;
+}}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -827,17 +1005,20 @@ def plot_prediction_breakdown(final_df: pd.DataFrame):
 
     fig, ax = plt.subplots(figsize=(7, 4))
     style_figure(fig)
-    bars = ax.bar(labels, percentages)
+    bar_colors = ["#3B82F6", "#C49A2E"]
+    bars = ax.bar(labels, percentages, color=bar_colors, edgecolor="none", width=0.5)
     style_plot(ax, "Fraud vs Non-Fraud Predictions (%)", ylabel="Percentage")
 
     for bar, value, pct in zip(bars, values, percentages):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height(),
-            f"{pct:.2f}%\n({value:,})",
+            bar.get_height() + 0.5,
+            f"{pct:.1f}%\n({value:,})",
             ha="center",
             va="bottom",
             color=theme["mpl_text"],
+            fontsize=9,
+            fontweight="bold",
         )
 
     st.pyplot(fig, use_container_width=True)
@@ -852,17 +1033,20 @@ def plot_risk_distribution(final_df: pd.DataFrame):
 
     fig, ax = plt.subplots(figsize=(7, 4))
     style_figure(fig)
-    bars = ax.bar(ordered_labels, percentages)
+    bar_colors = ["#22c55e", "#f59e0b", "#ef4444"]
+    bars = ax.bar(ordered_labels, percentages, color=bar_colors, edgecolor="none", width=0.45)
     style_plot(ax, "Risk Level Distribution (%)", ylabel="Percentage")
 
     for bar, value, pct in zip(bars, ordered_values, percentages):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height(),
-            f"{pct:.2f}%\n({value:,})",
+            bar.get_height() + 0.5,
+            f"{pct:.1f}%\n({value:,})",
             ha="center",
             va="bottom",
             color=theme["mpl_text"],
+            fontsize=9,
+            fontweight="bold",
         )
 
     st.pyplot(fig, use_container_width=True)
@@ -875,7 +1059,8 @@ def plot_log_scale_count_chart(final_df: pd.DataFrame):
 
     fig, ax = plt.subplots(figsize=(7, 4))
     style_figure(fig)
-    bars = ax.bar(labels, values)
+    bar_colors = ["#3B82F6", "#C49A2E"]
+    bars = ax.bar(labels, values, color=bar_colors, edgecolor="none", width=0.5)
     style_plot(ax, "Fraud vs Non-Fraud Predictions (Log Scale Count)", ylabel="Count (log scale)")
     ax.set_yscale("log")
 
@@ -883,11 +1068,13 @@ def plot_log_scale_count_chart(final_df: pd.DataFrame):
         if value > 0:
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
-                bar.get_height(),
+                bar.get_height() * 1.15,
                 f"{value:,}",
                 ha="center",
                 va="bottom",
                 color=theme["mpl_text"],
+                fontsize=9,
+                fontweight="bold",
             )
 
     st.pyplot(fig, use_container_width=True)
@@ -1032,9 +1219,22 @@ def plot_feature_importance_proxy(final_df: pd.DataFrame):
 
     corr = numeric_df.corrwith(final_df["fraud_probability"]).abs().sort_values(ascending=False).head(10)
 
+    # Gold-to-purple gradient colours for bars (pure Python, no extra imports)
+    n = len(corr)
+    _step = 1.0 / max(n - 1, 1)
+    _t_vals = [i * _step for i in range(n)]
+    bar_colors_hex = [
+        "#{:02x}{:02x}{:02x}".format(
+            int(196 + (168 - 196) * t),
+            int(154 + (118 - 154) * t),
+            int(46  + (190 - 46)  * t),
+        )
+        for t in _t_vals
+    ]
+
     fig, ax = plt.subplots(figsize=(8, 5))
     style_figure(fig)
-    ax.barh(corr.index[::-1], corr.values[::-1])
+    ax.barh(corr.index[::-1], corr.values[::-1], color=bar_colors_hex[::-1], edgecolor="none")
     style_plot(ax, "Feature Importance Proxy (|correlation with fraud probability|)", xlabel="Absolute Correlation")
     st.pyplot(fig, use_container_width=True)
 
@@ -1044,13 +1244,22 @@ with st.sidebar:
     # ── Brand Header ────────────────────────────────────────────────
     st.markdown(
         """
-        <div style="text-align:center; padding: 12px 0 8px 0;">
-            <div style="font-size:2.2rem;">🛡️</div>
-            <div style="font-weight:800; font-size:1.1rem; letter-spacing:0.04em;">
-                Fraud Intelligence
+        <div style="text-align:center; padding: 12px 0 8px 0; display: flex; flex-direction: column; align-items: center;">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 8px;">
+                <path d="M12 2L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 2Z" fill="url(#shieldGrad)" stroke="#D4AF37" stroke-width="1.8"/>
+                <path d="M9 11.5L11 13.5L15 9.5" stroke="#D4AF37" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs>
+                    <linearGradient id="shieldGrad" x1="12" y1="2" x2="12" y2="23" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#00563B" stop-opacity="0.85"/>
+                        <stop offset="1" stop-color="#050B08" stop-opacity="0.95"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+            <div style="font-weight:800; font-size:1.15rem; letter-spacing:0.04em; font-family: 'Playfair Display', serif; color: #D4AF37;">
+                Highland Shield
             </div>
-            <div style="font-size:0.72rem; opacity:0.55; letter-spacing:0.08em; text-transform:uppercase;">
-                Production ML Platform v2.0
+            <div style="font-size:0.72rem; opacity:0.55; letter-spacing:0.08em; text-transform:uppercase; margin-top: 2px;">
+                Scottish Enterprise ML Platform
             </div>
         </div>
         """,
@@ -1079,7 +1288,8 @@ with st.sidebar:
     st.markdown("#### 🏆 Model Performance")
     _mperf = {"F1": "N/A", "ROC-AUC": "N/A", "MCC": "N/A", "PR-AUC": "N/A"}
     try:
-        import json as _jj, os as _os
+        import json as _jj
+        import os as _os
         _mp = "models/artifacts/metrics.json"
         if _os.path.exists(_mp):
             with open(_mp) as _mf:
@@ -1288,7 +1498,30 @@ with st.sidebar:
     st.session_state["active_tab"] = active_tab
 
     st.divider()
-    st.caption("© 2025 Fraud Detection System · MIT License")
+
+    # ── Portfolio Card ─────────────────────────────────────────────────
+    st.markdown(
+        """
+        <div class="portfolio-card">
+            <div class="portfolio-name">👤 Parth Kadian</div>
+            <div class="portfolio-sub">2nd Year AI/ML Student &nbsp;·&nbsp; Edinburgh</div>
+            <div style="margin-top:6px; font-size:0.72rem; opacity:0.6; line-height:1.5;">
+                Built as an end-to-end production ML
+                portfolio demonstrating real MLOps.
+            </div>
+            <a class="portfolio-link"
+               href="https://github.com/Parthkadian/Fraud-Detection-System"
+               target="_blank">
+               🐙 GitHub ↗
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<div style='font-size:0.7rem;opacity:0.35;text-align:center;margin-top:8px;'>© 2025 MIT License</div>",
+        unsafe_allow_html=True,
+    )
 
 # ── Health + refresh state ───────────────────────────────────────────
 api_health_state, api_health_label, api_health_dot = get_api_health()
@@ -1302,7 +1535,7 @@ _chk_time = st.session_state["last_api_refresh"].strftime("%H:%M:%S UTC")
 _delta_s  = int((_now_utc - st.session_state["last_api_refresh"]).total_seconds())
 _ago_lbl  = f"{_delta_s}s ago" if _delta_s < 60 else f"{_delta_s // 60}m {_delta_s % 60}s ago"
 
-_sc_left, _sc_right = st.columns([3, 2])
+_sc_left, _sc_right = st.columns([4.7, 1.3])
 with _sc_left:
     st.markdown(
         f"""
@@ -1312,6 +1545,7 @@ with _sc_left:
             <div class="status-pill"><span class="status-dot {api_health_dot}"></span>{api_health_label}</div>
             <div class="status-pill"><span class="status-dot dot-green"></span>Audit Trail Active</div>
             <div class="status-pill"><span class="status-dot dot-pink"></span>Rules Engine</div>
+            <div class="status-pill"><span class="status-dot" style="background:#A876BE;box-shadow:0 0 0 0 rgba(168,118,190,0.5);animation:pulseDot 2.5s ease-in-out infinite;"></span>XGBoost Loaded</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1343,30 +1577,45 @@ with _sc_right:
 
 left, right = st.columns([1.8, 1.0], gap="large")
 
+# ── Live hero KPIs from audit API ───────────────────────────────────
+_hero_txns, _hero_fraud, _hero_rate, _hero_lat = 0, 0, 0.0, 0.0
+try:
+    _hr = requests.get(f"{API_BASE_URL}/audit/history", params={"limit": 500}, timeout=2)
+    if _hr.status_code == 200:
+        _hd = _hr.json()
+        _hs = _hd.get("stats", {})
+        _hero_txns  = int(_hs.get("total_predictions", 0) or 0)
+        _hero_fraud = int(_hs.get("total_fraud", 0) or 0)
+        _hero_lat   = float(_hs.get("avg_latency_ms", 0) or 0)
+        _hero_rate  = (_hero_fraud / _hero_txns * 100) if _hero_txns > 0 else 0.0
+except Exception:
+    pass
+
 with left:
     st.markdown(
-        """
+        f"""
     <div class="hero-card">
-        <div class="info-chip">Designed as a multi-phase fraud analytics pipeline</div>
-        <div style="font-size:4rem; font-weight:800; line-height:1.02; margin-top:10px;">
-            From raw transactions<br>
-            to ranked<br>
-            <span class="hero-accent-gold">fraud</span> <span class="hero-accent-purple">insights.</span>
+        <div class="info-chip">🛡️ Highland Fraud Shield &nbsp;·&nbsp; v2.0 &nbsp;·&nbsp; FCA Compliant</div>
+        <div class="hero-headline">
+            Detect <span class="hero-accent-gold">fraud.</span><br>
+            Explain the <span class="hero-accent-purple">risk.</span><br>
+            Audit every decision.
         </div>
-        <div style="margin-top:18px; color: rgba(255,255,255,0.72); font-size:1rem;">
-            Real-time scoring, batch analysis, explainability, and analyst-focused visualisations in one premium interface.
+        <div style="margin-top:18px; color: rgba(240,236,248,0.68); font-size:0.97rem; line-height:1.7; max-width:520px;">
+            Enterprise-grade Highland fraud intelligence built to meet strict
+            <strong style="color:rgba(240,236,248,0.90);">FCA explainability guidelines</strong> and
+            <strong style="color:rgba(240,236,248,0.90);">banking audit requirements</strong> —
+            SHAP-powered decision auditing, Evidently data distribution drift tracking,
+            and an integrated Highland audit ledger.
         </div>
-        <div style="margin-top:18px;">
-            <span class="info-chip">Real-time risk scoring</span>
-            <span class="info-chip">Batch CSV upload</span>
-            <span class="info-chip">SHAP explanations</span>
-            <span class="info-chip">Analytics dashboard</span>
-        </div>
-        <div style="margin-top:8px;">
-            <span class="info-chip">Docker Ready</span>
-            <span class="info-chip">FastAPI Backend</span>
-            <span class="info-chip">Real-time ML</span>
-            <span class="info-chip">Explainable AI</span>
+        <div class="hero-accent-line"></div>
+        <div style="margin-top:16px; display:flex; flex-wrap:wrap; gap:8px;">
+            <span class="info-chip">⚡ Real-time scoring</span>
+            <span class="info-chip">🧠 SHAP explainability</span>
+            <span class="info-chip">🗂️ Highland Audit Ledger</span>
+            <span class="info-chip">🌊 Drift monitoring</span>
+            <span class="info-chip">📋 Business rules engine</span>
+            <span class="info-chip">🐳 Docker-ready</span>
         </div>
     </div>
     """,
@@ -1376,30 +1625,33 @@ with left:
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown(
-            """
+            f"""
         <div class="metric-mini">
-            <h3>1</h3>
-            <p>Unified dashboard for single and batch fraud analysis</p>
+            <span class="kpi-icon-sm">🔢</span>
+            <h3>{_hero_txns:,}</h3>
+            <p>Transactions scored</p>
         </div>
         """,
             unsafe_allow_html=True,
         )
     with c2:
         st.markdown(
-            """
+            f"""
         <div class="metric-mini">
-            <h3>N</h3>
-            <p>Transactions can be scored and reviewed in one workflow</p>
+            <span class="kpi-icon-sm">🚨</span>
+            <h3>{_hero_fraud:,}</h3>
+            <p>Fraud alerts flagged</p>
         </div>
         """,
             unsafe_allow_html=True,
         )
     with c3:
         st.markdown(
-            """
+            f"""
         <div class="metric-mini">
-            <h3>∞</h3>
-            <p>Built to evolve into a scalable fraud analytics platform</p>
+            <span class="kpi-icon-sm">⚡</span>
+            <h3>{_hero_lat:.0f}<span style="font-size:1rem;font-weight:500;"> ms</span></h3>
+            <p>Avg inference latency</p>
         </div>
         """,
             unsafe_allow_html=True,
@@ -1448,7 +1700,7 @@ with right:
 st.markdown(
     """
 <div class="top-toolbar">
-    <div class="toolbar-left">Fraud Intelligence Workspace</div>
+    <div class="toolbar-left">Highland Shield Risk Workspace</div>
     <div class="toolbar-right">
         <span class="toolbar-chip">Realtime</span>
         <span class="toolbar-chip">Batch</span>
@@ -1538,9 +1790,15 @@ if active_tab == "🎯 Single Transaction Scoring":
                     key=f"tab1_{_fname}",
                 )
                 _outlier_warn(_fname, _bf_vals[_fname])
-        V1  = _bf_vals["V1"];  V2  = _bf_vals["V2"];  V3  = _bf_vals["V3"]
-        V4  = _bf_vals["V4"];  V5  = _bf_vals["V5"];  V6  = _bf_vals["V6"]
-        V7  = _bf_vals["V7"];  V8  = _bf_vals["V8"];  V9  = _bf_vals["V9"]
+        V1 = _bf_vals["V1"]
+        V2 = _bf_vals["V2"]
+        V3 = _bf_vals["V3"]
+        V4 = _bf_vals["V4"]
+        V5 = _bf_vals["V5"]
+        V6 = _bf_vals["V6"]
+        V7 = _bf_vals["V7"]
+        V8 = _bf_vals["V8"]
+        V9 = _bf_vals["V9"]
 
     # ── Group 3: Merchant & Location (V10–V18) ───────────────────────────
     with st.expander("🏪 Merchant & Location  ·  V10 – V18", expanded=True):
@@ -1562,9 +1820,15 @@ if active_tab == "🎯 Single Transaction Scoring":
                     key=f"tab1_{_fname}",
                 )
                 _outlier_warn(_fname, _ml_vals[_fname])
-        V10 = _ml_vals["V10"]; V11 = _ml_vals["V11"]; V12 = _ml_vals["V12"]
-        V13 = _ml_vals["V13"]; V14 = _ml_vals["V14"]; V15 = _ml_vals["V15"]
-        V16 = _ml_vals["V16"]; V17 = _ml_vals["V17"]; V18 = _ml_vals["V18"]
+        V10 = _ml_vals["V10"]
+        V11 = _ml_vals["V11"]
+        V12 = _ml_vals["V12"]
+        V13 = _ml_vals["V13"]
+        V14 = _ml_vals["V14"]
+        V15 = _ml_vals["V15"]
+        V16 = _ml_vals["V16"]
+        V17 = _ml_vals["V17"]
+        V18 = _ml_vals["V18"]
 
     # ── Group 4: Network & Risk Signals (V19–V28) ────────────────────────
     with st.expander("🌐 Network & Risk Signals  ·  V19 – V28", expanded=False):
@@ -1588,9 +1852,15 @@ if active_tab == "🎯 Single Transaction Scoring":
                     key=f"tab1_{_fname}",
                 )
                 _outlier_warn(_fname, _nr_vals[_fname])
-        V19 = _nr_vals["V19"]; V20 = _nr_vals["V20"]; V21 = _nr_vals["V21"]
-        V22 = _nr_vals["V22"]; V23 = _nr_vals["V23"]; V24 = _nr_vals["V24"]
-        V25 = _nr_vals["V25"]; V26 = _nr_vals["V26"]; V27 = _nr_vals["V27"]
+        V19 = _nr_vals["V19"]
+        V20 = _nr_vals["V20"]
+        V21 = _nr_vals["V21"]
+        V22 = _nr_vals["V22"]
+        V23 = _nr_vals["V23"]
+        V24 = _nr_vals["V24"]
+        V25 = _nr_vals["V25"]
+        V26 = _nr_vals["V26"]
+        V27 = _nr_vals["V27"]
         V28 = _nr_vals["V28"]
 
     input_data = {

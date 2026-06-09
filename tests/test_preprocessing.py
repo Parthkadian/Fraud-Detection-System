@@ -63,7 +63,7 @@ class TestDataValidator:
     def test_non_strict_mode_warns(self):
         df = pd.DataFrame({"Time": [1.0], "Amount": [10.0]})
         validator = DataValidator(strict=False)
-        result = validator.validate(df)
+        validator.validate(df)
         assert len(validator.validation_report["missing_columns"]) > 0
 
     def test_negative_amount_detection(self, sample_dataframe):

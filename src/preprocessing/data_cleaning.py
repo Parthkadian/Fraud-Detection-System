@@ -6,9 +6,7 @@ column-specific imputation strategies, and audit logging.
 """
 
 import pandas as pd
-import numpy as np
 import logging
-from typing import Optional
 
 logger = logging.getLogger("fraud_detection_logger")
 

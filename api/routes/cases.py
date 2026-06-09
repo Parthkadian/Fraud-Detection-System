@@ -29,7 +29,6 @@ from api.schemas import (
     CaseStatusUpdate,
     CaseAssignRequest,
     CaseNoteRequest,
-    ErrorResponse,
 )
 import api.database as db
 

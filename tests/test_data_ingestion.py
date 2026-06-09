@@ -3,9 +3,8 @@ Tests — Data Ingestion
 ======================
 """
 
-import pytest
 import pandas as pd
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 class TestDataIngestion:

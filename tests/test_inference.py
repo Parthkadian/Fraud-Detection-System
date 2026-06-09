@@ -4,10 +4,6 @@ Tests — Inference
 Tests for single and batch prediction output formats and risk-level logic.
 """
 
-import pytest
-import numpy as np
-import pandas as pd
-from unittest.mock import patch, MagicMock
 
 
 class TestRiskLevelLogic:
