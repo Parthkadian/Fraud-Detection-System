@@ -91,8 +91,8 @@ FEATURE_STATS = {
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 import requests  # noqa: E402
-from sklearn.metrics import auc, confusion_matrix, precision_recall_curve, roc_curve  # noqa: E402
 import streamlit as st  # noqa: E402
+# sklearn is imported lazily inside chart functions to reduce startup RAM
 
 st.set_page_config(
     page_title="Highland Fraud Shield | Enterprise Risk Workspace",
@@ -185,6 +185,7 @@ def get_theme_tokens(mode: str):
 theme = get_theme_tokens(st.session_state.theme_mode)
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_api_health():
     try:
         response = requests.get(f"{API_BASE_URL}/health", timeout=3)
@@ -1111,6 +1112,7 @@ def plot_roc_curve(final_df: pd.DataFrame):
         st.info("ROC curve requires a 'Class' column in the uploaded CSV.")
         return
 
+    from sklearn.metrics import auc, roc_curve  # lazy import
     y_true = final_df["Class"]
     y_score = final_df["fraud_probability"]
 
@@ -1136,6 +1138,7 @@ def plot_precision_recall_curve(final_df: pd.DataFrame):
         st.info("Precision-Recall curve requires a 'Class' column in the uploaded CSV.")
         return
 
+    from sklearn.metrics import precision_recall_curve  # lazy import
     y_true = final_df["Class"]
     y_score = final_df["fraud_probability"]
 
@@ -1152,6 +1155,7 @@ def plot_confusion_matrix_chart(final_df: pd.DataFrame):
         st.info("Confusion matrix requires a 'Class' column in the uploaded CSV.")
         return
 
+    from sklearn.metrics import confusion_matrix  # lazy import
     y_true = final_df["Class"]
     y_pred = final_df["prediction"]
     cm = confusion_matrix(y_true, y_pred)
@@ -1287,9 +1291,12 @@ with st.sidebar:
     st.markdown("#### 🏆 Model Performance")
     _mperf = {"F1": "N/A", "ROC-AUC": "N/A", "MCC": "N/A", "PR-AUC": "N/A"}
     try:
-        _mp_resp = requests.get(f"{API_BASE_URL}/model/performance", timeout=5)
-        if _mp_resp.status_code == 200:
-            _mm = _mp_resp.json()
+        @st.cache_data(ttl=300, show_spinner=False)
+        def _fetch_model_perf():
+            r = requests.get(f"{API_BASE_URL}/model/performance", timeout=5)
+            return r.json() if r.status_code == 200 else {}
+        _mm = _fetch_model_perf()
+        if _mm:
             def _fmt(v):
                 return str(round(v, 4)) if v is not None else "N/A"
             _mperf = {
@@ -1314,22 +1321,25 @@ with st.sidebar:
 
     st.divider()
 
+    # ── Session Metrics ───────────────────────────────────────────────
     st.markdown("#### 📊 Session Metrics")
 
-    # Pull live audit data
+    # Pull live audit data (cached 30s to avoid per-interaction requests)
     _sess_total, _sess_fraud, _sess_rate, _sess_lat = 0, 0, 0.0, 0.0
     _rules_fired = 0
     try:
-        _ar = requests.get(f"{API_BASE_URL}/audit/history", params={"limit": 500}, timeout=2)
-        if _ar.status_code == 200:
-            _ad = _ar.json()
-            _st2 = _ad.get("stats", {})
-            _recs = _ad.get("records", [])
-            _sess_total = int(_st2.get("total_predictions", 0) or 0)
-            _sess_fraud = int(_st2.get("total_fraud", 0) or 0)
-            _sess_lat   = float(_st2.get("avg_latency_ms", 0) or 0)
-            _sess_rate  = (_sess_fraud / _sess_total * 100) if _sess_total > 0 else 0.0
-            _rules_fired = sum(1 for r in _recs if r.get("rule_triggered"))
+        @st.cache_data(ttl=30, show_spinner=False)
+        def _fetch_audit_stats():
+            r = requests.get(f"{API_BASE_URL}/audit/history", params={"limit": 100}, timeout=3)
+            return r.json() if r.status_code == 200 else {}
+        _ad = _fetch_audit_stats()
+        _st2 = _ad.get("stats", {})
+        _recs = _ad.get("records", [])
+        _sess_total = int(_st2.get("total_predictions", 0) or 0)
+        _sess_fraud = int(_st2.get("total_fraud", 0) or 0)
+        _sess_lat   = float(_st2.get("avg_latency_ms", 0) or 0)
+        _sess_rate  = (_sess_fraud / _sess_total * 100) if _sess_total > 0 else 0.0
+        _rules_fired = sum(1 for r in _recs if r.get("rule_triggered"))
     except Exception:
         pass
 
@@ -1364,49 +1374,46 @@ with st.sidebar:
         key="sidebar_risk_filter",
     )
     try:
-        _rp_resp = requests.get(f"{API_BASE_URL}/audit/history", params={"limit": 20}, timeout=2)
-        if _rp_resp.status_code == 200:
-            _rp_recs = _rp_resp.json().get("records", [])
-            if _rp_filter != "All":
-                _rp_recs = [r for r in _rp_recs if r.get("risk_level") == _rp_filter]
-            if _rp_recs:
-                for _rp in _rp_recs[:8]:
-                    _rp_risk  = _rp.get("risk_level", "?")
-                    _rp_prob  = float(_rp.get("fraud_probability", 0))
-                    _rp_amt   = float(_rp.get("amount", 0))
-                    _rp_id    = _rp.get("id", str(_rp_amt))
-                    _rp_color = {"HIGH": "#f87171", "MEDIUM": "#fbbf24", "LOW": "#34d399"}.get(_rp_risk, "#94a3b8")
-                    _flagged  = _rp_id in st.session_state["flagged_ids"]
-                    _flag_icon = "🚩" if _flagged else "⚑"
-                    _flag_label = "Flagged" if _flagged else "Flag"
-                    st.markdown(
-                        f"<div style='display:flex;justify-content:space-between;align-items:center;"
-                        f"padding:5px 8px;margin-bottom:4px;border-radius:7px;"
-                        f"background:rgba(255,255,255,0.03);border-left:3px solid {_rp_color};'>"
-                        f"<div style='display:flex;flex-direction:column;gap:1px;'>"
-                        f"<span style='font-size:0.78rem;font-weight:700;color:{_rp_color};'>{_rp_risk}</span>"
-                        f"<span style='font-size:0.72rem;opacity:0.6;'>£{_rp_amt:.0f} &nbsp;·&nbsp; {_rp_prob:.3f}</span>"
-                        f"</div>"
-                        f"<span style='font-size:0.72rem;opacity:{'1' if _flagged else '0.45'};color:#C49A2E;'>{_flag_icon} {_flag_label}</span>"
-                        f"</div>",
-                        unsafe_allow_html=True,
-                    )
-                    if st.button(
-                        f"{'Unflag' if _flagged else 'Flag for review'}",
-                        key=f"flag_{_rp_id}",
-                        use_container_width=True,
-                    ):
-                        if _flagged:
-                            st.session_state["flagged_ids"].discard(_rp_id)
-                        else:
-                            st.session_state["flagged_ids"].add(_rp_id)
-                        st.rerun()
-                if st.session_state["flagged_ids"]:
-                    st.caption(f"🚩 {len(st.session_state['flagged_ids'])} flagged for review")
-            else:
-                st.caption("No predictions match filter.")
+        # Reuse the already-cached audit response from Session Metrics above
+        _rp_recs = _ad.get("records", [])
+        if _rp_filter != "All":
+            _rp_recs = [r for r in _rp_recs if r.get("risk_level") == _rp_filter]
+        if _rp_recs:
+            for _rp in _rp_recs[:8]:
+                _rp_risk  = _rp.get("risk_level", "?")
+                _rp_prob  = float(_rp.get("fraud_probability", 0))
+                _rp_amt   = float(_rp.get("amount", 0))
+                _rp_id    = _rp.get("id", str(_rp_amt))
+                _rp_color = {"HIGH": "#f87171", "MEDIUM": "#fbbf24", "LOW": "#34d399"}.get(_rp_risk, "#94a3b8")
+                _flagged  = _rp_id in st.session_state["flagged_ids"]
+                _flag_icon = "🚩" if _flagged else "⚑"
+                _flag_label = "Flagged" if _flagged else "Flag"
+                st.markdown(
+                    f"<div style='display:flex;justify-content:space-between;align-items:center;"
+                    f"padding:5px 8px;margin-bottom:4px;border-radius:7px;"
+                    f"background:rgba(255,255,255,0.03);border-left:3px solid {_rp_color};'>"
+                    f"<div style='display:flex;flex-direction:column;gap:1px;'>"
+                    f"<span style='font-size:0.78rem;font-weight:700;color:{_rp_color};'>{_rp_risk}</span>"
+                    f"<span style='font-size:0.72rem;opacity:0.6;'>£{_rp_amt:.0f} &nbsp;·&nbsp; {_rp_prob:.3f}</span>"
+                    f"</div>"
+                    f"<span style='font-size:0.72rem;opacity:{'1' if _flagged else '0.45'};color:#C49A2E;'>{_flag_icon} {_flag_label}</span>"
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
+                if st.button(
+                    f"{'Unflag' if _flagged else 'Flag for review'}",
+                    key=f"flag_{_rp_id}",
+                    use_container_width=True,
+                ):
+                    if _flagged:
+                        st.session_state["flagged_ids"].discard(_rp_id)
+                    else:
+                        st.session_state["flagged_ids"].add(_rp_id)
+                    st.rerun()
+            if st.session_state["flagged_ids"]:
+                st.caption(f"🚩 {len(st.session_state['flagged_ids'])} flagged for review")
         else:
-            st.caption("API offline.")
+            st.caption("No predictions match filter.")
     except Exception:
         st.caption("API offline.")
 

@@ -2,10 +2,7 @@ streamlit
 pandas
 requests
 matplotlib
-scikit-learn
 numpy
 wordcloud
 seaborn
-shap
-joblib
-xgboost
+scikit-learn
