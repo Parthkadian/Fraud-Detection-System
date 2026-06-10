@@ -36,27 +36,27 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import api.database as db
 from api.middleware import (
+    RateLimitMiddleware,
     RequestIDMiddleware,
     RequestTimingMiddleware,
-    RateLimitMiddleware,
 )
-from src.inference.predict import FraudPredictor
-from src.inference.batch_predict import BatchPredictor
-from src.explainability.shap_explainer import ShapExplainer
-import api.database as db
+from api.routes import alerts as alerts_router
+from api.routes import business as business_router
+from api.routes import cases as cases_router
+from api.routes import explainability as explainability_router
+from api.routes import lists as lists_router
+from api.routes import model_ops as model_ops_router
+from api.routes import monitoring as monitoring_router
 
 # ── Routers ───────────────────────────────────────────────────────────────
-from api.routes import prediction   as prediction_router
-from api.routes import cases        as cases_router
-from api.routes import review       as review_router
-from api.routes import lists        as lists_router
-from api.routes import profiles     as profiles_router
-from api.routes import alerts       as alerts_router
-from api.routes import business     as business_router
-from api.routes import model_ops    as model_ops_router
-from api.routes import explainability as explainability_router
-from api.routes import monitoring   as monitoring_router
+from api.routes import prediction as prediction_router
+from api.routes import profiles as profiles_router
+from api.routes import review as review_router
+from src.explainability.shap_explainer import ShapExplainer
+from src.inference.batch_predict import BatchPredictor
+from src.inference.predict import FraudPredictor
 
 # ═══════════════════════════════════════════════════════════════════════════ #
 #  Logging

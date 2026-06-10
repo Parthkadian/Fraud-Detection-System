@@ -22,15 +22,15 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+import api.database as db
 from api.middleware import verify_api_key
 from api.schemas import (
+    CaseAssignRequest,
     CaseCreateRequest,
+    CaseNoteRequest,
     CaseResponse,
     CaseStatusUpdate,
-    CaseAssignRequest,
-    CaseNoteRequest,
 )
-import api.database as db
 
 logger = logging.getLogger("fraud_detection_logger")
 

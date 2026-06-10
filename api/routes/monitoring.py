@@ -21,15 +21,15 @@ from __future__ import annotations
 import json
 import logging
 import os
-import time
 from pathlib import Path
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, PlainTextResponse
 
+import api.database as db
 from api.middleware import verify_api_key
 from api.schemas import HealthResponse
-import api.database as db
 
 logger = logging.getLogger("fraud_detection_logger")
 
@@ -57,7 +57,7 @@ def _get_main_state() -> dict:
         "model_version": None,
     }
     try:
-        from api.main import MODEL_LOADED, MODEL_ERROR, predictor  # type: ignore[attr-defined]
+        from api.main import MODEL_ERROR, MODEL_LOADED, predictor  # type: ignore[attr-defined]
         state["model_loaded"] = bool(MODEL_LOADED)
         state["model_error"]  = MODEL_ERROR
         state["predictor"]    = predictor

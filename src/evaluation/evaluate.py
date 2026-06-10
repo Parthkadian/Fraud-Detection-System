@@ -12,15 +12,15 @@ from typing import Optional
 
 from sklearn.metrics import (
     accuracy_score,
+    average_precision_score,
+    classification_report,
+    cohen_kappa_score,
+    confusion_matrix,
+    f1_score,
+    matthews_corrcoef,
     precision_score,
     recall_score,
-    f1_score,
     roc_auc_score,
-    average_precision_score,
-    confusion_matrix,
-    matthews_corrcoef,
-    cohen_kappa_score,
-    classification_report,
 )
 
 

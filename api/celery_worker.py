@@ -1,5 +1,7 @@
 import os
+
 from celery import Celery
+
 from src.inference.predict import FraudPredictor
 
 REDIS_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
@@ -21,7 +23,7 @@ def predict_transaction(transaction_dict: dict):
             predictor = FraudPredictor()
         except Exception as e:
             return {"error": f"Failed to load model in worker: {str(e)}"}
-            
+
     try:
         result = predictor.predict(transaction_dict)
         return result

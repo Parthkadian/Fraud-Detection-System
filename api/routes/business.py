@@ -17,8 +17,8 @@ import logging
 
 from fastapi import APIRouter, Depends
 
-from api.middleware import verify_api_key
 import api.database as db
+from api.middleware import verify_api_key
 
 logger = logging.getLogger("fraud_detection_logger")
 

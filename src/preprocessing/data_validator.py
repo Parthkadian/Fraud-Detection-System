@@ -7,9 +7,10 @@ engineering step so that downstream code can trust the shape and types of
 its inputs.
 """
 
-import pandas as pd
-import numpy as np
 import logging
+
+import numpy as np
+import pandas as pd
 
 logger = logging.getLogger("fraud_detection_logger")
 

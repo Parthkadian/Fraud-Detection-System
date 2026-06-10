@@ -29,13 +29,13 @@ logger = logging.getLogger("fraud_detection_logger")
 # ── Try to import prometheus_client ──────────────────────────────────────────
 try:
     from prometheus_client import (
+        CONTENT_TYPE_LATEST,
+        REGISTRY,
         Counter,
         Gauge,
         Histogram,
         Info,
         generate_latest,
-        CONTENT_TYPE_LATEST,
-        REGISTRY,
     )
     _PROMETHEUS_AVAILABLE = True
 except ImportError:

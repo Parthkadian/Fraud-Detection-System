@@ -20,16 +20,16 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
+import pandas as pd
 
+import api.database as db
 from api.middleware import verify_api_key
 from api.schemas import (
-    TransactionInput,
-    PredictionResponse,
     PredictCompareResponse,
+    PredictionResponse,
+    TransactionInput,
 )
-import api.database as db
 
 logger = logging.getLogger("fraud_detection_logger")
 
@@ -46,7 +46,7 @@ _FRAUD_MULTIPLIER    = 1.0    # potential_loss = amount * multiplier
 
 def _get_predictor():
     """Import predictor from main app state. Avoids circular imports."""
-    from api.main import predictor, MODEL_LOADED, MODEL_ERROR
+    from api.main import MODEL_ERROR, MODEL_LOADED, predictor
     if not MODEL_LOADED:
         raise HTTPException(status_code=503, detail=f"Model not loaded: {MODEL_ERROR}")
     return predictor
@@ -344,7 +344,7 @@ def predict_batch(
     transactions: list[dict],
     _: None = Depends(verify_api_key),
 ):
-    from api.main import batch_predictor, MODEL_LOADED, MODEL_ERROR
+    from api.main import MODEL_ERROR, MODEL_LOADED, batch_predictor
     if not MODEL_LOADED:
         raise HTTPException(status_code=503, detail=f"Model not loaded: {MODEL_ERROR}")
 

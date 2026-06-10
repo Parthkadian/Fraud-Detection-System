@@ -5,8 +5,9 @@ Production-grade data cleaning with outlier detection reporting,
 column-specific imputation strategies, and audit logging.
 """
 
-import pandas as pd
 import logging
+
+import pandas as pd
 
 logger = logging.getLogger("fraud_detection_logger")
 

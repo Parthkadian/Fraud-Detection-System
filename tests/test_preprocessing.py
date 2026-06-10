@@ -4,11 +4,12 @@ Tests — Preprocessing
 Tests for DataCleaning and DataValidator.
 """
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
+
 from src.preprocessing.data_cleaning import DataCleaning
-from src.preprocessing.data_validator import DataValidator, DataValidationError
+from src.preprocessing.data_validator import DataValidationError, DataValidator
 
 
 class TestDataCleaning:

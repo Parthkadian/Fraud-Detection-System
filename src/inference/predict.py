@@ -13,18 +13,18 @@ Integrations
 
 from __future__ import annotations
 
-import time
 import logging
+import time
 from typing import Optional
 
 import pandas as pd
 
-from src.utils.config_loader import load_yaml_file
-from src.utils.common import load_object, load_json
 from src.features.feature_engineering import FeatureEngineering
-from src.rules.rule_engine import BusinessRuleEngine
 from src.monitoring.audit_log import PredictionAuditLogger
 from src.monitoring.prometheus_metrics import get_metrics
+from src.rules.rule_engine import BusinessRuleEngine
+from src.utils.common import load_json, load_object
+from src.utils.config_loader import load_yaml_file
 
 logger = logging.getLogger("fraud_detection_logger")
 

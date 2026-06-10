@@ -14,9 +14,9 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
+import api.database as db
 from api.middleware import verify_api_key
 from api.schemas import ReviewDecisionRequest
-import api.database as db
 
 logger = logging.getLogger("fraud_detection_logger")
 

@@ -4,8 +4,9 @@ Tests — Feature Engineering
 Tests for the FeatureEngineering class.
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from src.features.feature_engineering import FeatureEngineering
 
 

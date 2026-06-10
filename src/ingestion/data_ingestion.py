@@ -1,6 +1,7 @@
 import pandas as pd
-from src.utils.config_loader import load_yaml_file
+
 from src.monitoring.logger import setup_logger
+from src.utils.config_loader import load_yaml_file
 
 
 class DataIngestion:
@@ -21,12 +22,12 @@ class DataIngestion:
         if "Class" in df.columns:
             import numpy as np
             np.random.seed(42)
-            
+
             # Legitimate transactions memos
             legit_memos = ["Amazon electronics", "Starbucks coffee", "Uber ride", "Grocery store", "Netflix subscription", "Gas station"]
             # Fraudulent transactions memos
             fraud_memos = ["Unrecognized overseas transfer", "Large cryptocurrency buy", "Luxury watch purchase", "Suspicious wire transfer", "High-value gift cards"]
-            
+
             # Assign randomly based on class
             df["transaction_memo"] = np.where(
                 df["Class"] == 1,

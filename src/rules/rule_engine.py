@@ -24,10 +24,9 @@ Usage
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass, field
+import logging
 from typing import Optional
-
 
 from src.utils.config_loader import load_yaml_file
 

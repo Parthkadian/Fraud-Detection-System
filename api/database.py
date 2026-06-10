@@ -23,15 +23,15 @@ features. Both can coexist.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from datetime import datetime, timezone
 import json
 import logging
 import os
-import sqlite3
-import uuid
-from contextlib import contextmanager
-from datetime import datetime, timezone
 from pathlib import Path
+import sqlite3
 from typing import Any, Generator, Optional
+import uuid
 
 logger = logging.getLogger("fraud_detection_logger")
 

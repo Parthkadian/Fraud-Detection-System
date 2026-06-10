@@ -17,13 +17,13 @@ Environment variables:
 
 from __future__ import annotations
 
+from collections import defaultdict
 import logging
 import os
-import time
-import uuid
-from collections import defaultdict
 from threading import Lock
+import time
 from typing import Optional
+import uuid
 
 from fastapi import HTTPException, Security
 from fastapi.security import APIKeyHeader

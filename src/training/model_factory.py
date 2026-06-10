@@ -5,9 +5,10 @@ Centralised model instantiation from YAML configuration.
 Supports XGBoost, Logistic Regression, and Random Forest.
 """
 
-from xgboost import XGBClassifier
-from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from xgboost import XGBClassifier
+
 from src.utils.config_loader import load_yaml_file
 
 

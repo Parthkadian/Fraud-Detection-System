@@ -24,7 +24,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.middleware import verify_api_key
-from api.schemas import TransactionInput, ExplanationResponse, GlobalExplanationResponse
+from api.schemas import ExplanationResponse, GlobalExplanationResponse, TransactionInput
 
 logger = logging.getLogger("fraud_detection_logger")
 
@@ -39,7 +39,7 @@ def _get_shap_explainer():
     Raises HTTP 503 if the model/explainer is not loaded.
     """
     try:
-        from api.main import shap_explainer, MODEL_LOADED, MODEL_ERROR  # type: ignore[attr-defined]
+        from api.main import MODEL_ERROR, MODEL_LOADED, shap_explainer  # type: ignore[attr-defined]
     except ImportError as exc:
         raise HTTPException(
             status_code=503,
@@ -71,7 +71,7 @@ def _get_predictor_state() -> tuple[Any, str | None]:
     Returns (None, None) on any failure — callers handle gracefully.
     """
     try:
-        from api.main import predictor, MODEL_LOADED  # type: ignore[attr-defined]
+        from api.main import MODEL_LOADED, predictor  # type: ignore[attr-defined]
         if not MODEL_LOADED or predictor is None:
             return None, None
         version = getattr(predictor, "version", None)
@@ -109,7 +109,7 @@ def _build_global_importance(predictor) -> tuple[list[dict], str]:
                 names = [f"feature_{i}" for i in range(len(importances))]
 
             pairs = sorted(
-                zip(names, importances),
+                zip(names, importances, strict=False),
                 key=lambda x: x[1],
                 reverse=True,
             )

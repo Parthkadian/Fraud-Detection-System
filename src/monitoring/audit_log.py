@@ -20,15 +20,15 @@ automated credit-risk decisions.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from datetime import datetime, timezone
 import hashlib
 import json
 import logging
-import sqlite3
-import uuid
-from contextlib import contextmanager
-from datetime import datetime, timezone
 from pathlib import Path
+import sqlite3
 from typing import Generator, Optional
+import uuid
 
 logger = logging.getLogger("fraud_detection_logger")
 

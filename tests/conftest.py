@@ -4,9 +4,9 @@ Shared Pytest Fixtures
 Provides reusable test data across all test modules.
 """
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 
 
 @pytest.fixture

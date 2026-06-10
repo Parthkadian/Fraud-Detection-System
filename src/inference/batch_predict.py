@@ -1,8 +1,8 @@
 import pandas as pd
 
-from src.utils.config_loader import load_yaml_file
-from src.utils.common import load_object, load_json
 from src.features.feature_engineering import FeatureEngineering
+from src.utils.common import load_json, load_object
+from src.utils.config_loader import load_yaml_file
 
 
 class BatchPredictor:

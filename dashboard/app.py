@@ -1,8 +1,7 @@
-import sys
-import os
-import time
 from datetime import datetime, timezone
-
+import os
+import sys
+import time
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -89,11 +88,11 @@ FEATURE_STATS = {
     "Time":   (0.0, 172800.0),
 }
 
-import streamlit as st  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 import requests  # noqa: E402
-import matplotlib.pyplot as plt  # noqa: E402
-from sklearn.metrics import roc_curve, auc, precision_recall_curve, confusion_matrix  # noqa: E402
+from sklearn.metrics import auc, confusion_matrix, precision_recall_curve, roc_curve  # noqa: E402
+import streamlit as st  # noqa: E402
 
 st.set_page_config(
     page_title="Highland Fraud Shield | Enterprise Risk Workspace",
@@ -1009,7 +1008,7 @@ def plot_prediction_breakdown(final_df: pd.DataFrame):
     bars = ax.bar(labels, percentages, color=bar_colors, edgecolor="none", width=0.5)
     style_plot(ax, "Fraud vs Non-Fraud Predictions (%)", ylabel="Percentage")
 
-    for bar, value, pct in zip(bars, values, percentages):
+    for bar, value, pct in zip(bars, values, percentages, strict=False):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 0.5,
@@ -1037,7 +1036,7 @@ def plot_risk_distribution(final_df: pd.DataFrame):
     bars = ax.bar(ordered_labels, percentages, color=bar_colors, edgecolor="none", width=0.45)
     style_plot(ax, "Risk Level Distribution (%)", ylabel="Percentage")
 
-    for bar, value, pct in zip(bars, ordered_values, percentages):
+    for bar, value, pct in zip(bars, ordered_values, percentages, strict=False):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 0.5,
@@ -1064,7 +1063,7 @@ def plot_log_scale_count_chart(final_df: pd.DataFrame):
     style_plot(ax, "Fraud vs Non-Fraud Predictions (Log Scale Count)", ylabel="Count (log scale)")
     ax.set_yscale("log")
 
-    for bar, value in zip(bars, values):
+    for bar, value in zip(bars, values, strict=False):
         if value > 0:
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
@@ -1303,7 +1302,7 @@ with st.sidebar:
     except Exception:
         pass
     _perf_colors = ["#C49A2E", "#A876BE", "#C49A2E", "#A876BE"]
-    for (_pk, _pv), _pc in zip(_mperf.items(), _perf_colors):
+    for (_pk, _pv), _pc in zip(_mperf.items(), _perf_colors, strict=False):
         st.markdown(
             f"<div style='display:flex;justify-content:space-between;align-items:center;"
             f"padding:5px 8px;margin-bottom:4px;border-radius:7px;"
@@ -2676,8 +2675,8 @@ elif active_tab == "🔁 Live Async Stream":
         stream_delay = st.slider("Delay between transactions (ms)", 100, 1000, 300, key="stream_delay")
 
     if st.button("▶ Start Live Stream", use_container_width=True, key="start_stream"):
-        import time as _time
         import random as _random
+        import time as _time
 
         # ── Synthetic transaction templates ──────────────────────────
         _legit_templates = [
@@ -2847,8 +2846,8 @@ elif active_tab == "💬 NLP Insights":
         )
 
     if st.button("Generate Word Clouds", use_container_width=True):
-        from wordcloud import WordCloud
         import numpy as np
+        from wordcloud import WordCloud
 
         if batch_df_available:
             # ── Use real uploaded + scored data ─────────────────────

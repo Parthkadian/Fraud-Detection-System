@@ -13,13 +13,15 @@ pipeline.  Engineered features include:
 - ``nlp_svd_0 … nlp_svd_4``— TF-IDF + SVD features from transaction memos
 """
 
-import pandas as pd
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition import TruncatedSVD
-from src.utils.common import save_object, load_object
-import os
 import logging
+import os
+
+import numpy as np
+import pandas as pd
+from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+from src.utils.common import load_object, save_object
 
 logger = logging.getLogger("fraud_detection_logger")
 

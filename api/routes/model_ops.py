@@ -56,7 +56,7 @@ def _get_live_model_state() -> tuple[str | None, float | None, int | None]:
     Returns (version, threshold, feature_count) — any may be None on failure.
     """
     try:
-        from api.main import predictor, MODEL_LOADED  # type: ignore[attr-defined]
+        from api.main import MODEL_LOADED, predictor  # type: ignore[attr-defined]
         if not MODEL_LOADED or predictor is None:
             return None, None, None
         version       = getattr(predictor, "version", None)

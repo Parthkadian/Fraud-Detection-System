@@ -25,12 +25,12 @@ Setting a correlation ID::
     set_correlation_id("req-abc-123")
 """
 
+from datetime import datetime, timezone
 import json
 import logging
 import logging.handlers
 import os
 import threading
-from datetime import datetime, timezone
 
 # Thread-local store for correlation IDs
 _local = threading.local()

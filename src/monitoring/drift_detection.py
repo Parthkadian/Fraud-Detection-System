@@ -1,9 +1,12 @@
-import pandas as pd
 import os
-from evidently.report import Report
+
 from evidently.metric_preset import DataDriftPreset
-from src.utils.config_loader import load_yaml_file
+from evidently.report import Report
+import pandas as pd
+
 from src.monitoring.logger import setup_logger
+from src.utils.config_loader import load_yaml_file
+
 
 class DriftMonitor:
     def __init__(self):
@@ -12,7 +15,7 @@ class DriftMonitor:
         self.reference_data_path = self.config["paths"]["raw_data"]
         self.report_dir = "reports"
         os.makedirs(self.report_dir, exist_ok=True)
-        
+
         try:
             # We assume the raw data is the reference for training
             self.reference_df = pd.read_csv(self.reference_data_path)
@@ -34,18 +37,18 @@ class DriftMonitor:
             return "Error: No production data provided."
 
         prod_df = pd.DataFrame(production_data)
-        
+
         # Ensure only overlapping columns are compared
         common_cols = list(set(self.reference_df.columns) & set(prod_df.columns))
-        
+
         if not common_cols:
             return "Error: No common columns to compare."
 
         report = Report(metrics=[DataDriftPreset()])
         report.run(reference_data=self.reference_df[common_cols], current_data=prod_df[common_cols])
-        
+
         report_path = os.path.join(self.report_dir, report_name)
         report.save_html(report_path)
-        
+
         self.logger.info(f"Drift report generated at {report_path}")
         return report_path

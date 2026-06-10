@@ -6,8 +6,8 @@ Detects anomalous fraud rates and high-risk concentrations,
 logs alerts, and maintains an in-memory alert history.
 """
 
-import logging
 from datetime import datetime, timezone
+import logging
 
 import pandas as pd
 

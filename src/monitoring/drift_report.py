@@ -7,7 +7,6 @@ Used by both the API endpoint and the dashboard's drift monitoring tab.
 
 import logging
 
-
 logger = logging.getLogger("fraud_detection_logger")
 
 

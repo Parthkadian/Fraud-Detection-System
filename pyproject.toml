@@ -1,0 +1,75 @@
+[tool.ruff]
+# ── Ruff configuration for Fraud Detection System ─────────────────────────────
+# Lock the target Python version so checks are environment-consistent.
+target-version = "py310"
+
+# Line length — keep generous to accommodate dashboard HTML strings.
+line-length = 120
+
+# Exclude generated / vendor directories from linting.
+exclude = [
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".git",
+    "*.egg-info",
+    "build",
+    "dist",
+    "mlruns",
+    "reports",
+    "logs",
+    "data",
+    "models",
+    "notebooks",
+]
+
+[tool.ruff.lint]
+# ── Selected rule sets ────────────────────────────────────────────────────────
+# E / W  : pycodestyle errors & warnings
+# F      : Pyflakes (undefined names, unused imports, etc.)
+# I      : isort (import ordering)
+# UP     : pyupgrade (modern Python idioms — informational, not gating)
+# B      : flake8-bugbear (common bugs)
+select = ["E", "W", "F", "I", "B"]
+
+# ── Globally ignored rules ────────────────────────────────────────────────────
+ignore = [
+    # E501 — line-too-long: dashboard HTML strings routinely exceed 88 chars.
+    #         We set line-length=120 above; anything beyond that is an author decision.
+    "E501",
+    # E402 — module-level import not at top: FastAPI / Streamlit patterns require
+    #         conditional imports after config loading in several modules.
+    "E402",
+    # B008 — do not perform function calls in default arguments: FastAPI Depends()
+    #         pattern legitimately uses this.
+    "B008",
+    # B904 — raise without `from` inside except: acceptable in CLI scripts.
+    "B904",
+]
+
+# ── Per-file overrides ────────────────────────────────────────────────────────
+[tool.ruff.lint.per-file-ignores]
+# Test files: allow assert statements (B011) and broad imports (F401 for fixtures).
+"tests/*" = ["F401", "E711", "B011"]
+# Dashboard app: large multi-line HTML strings cause many style flags.
+"dashboard/app.py" = ["E501", "W291", "W293"]
+# Pipeline runner script: broad exception handling is intentional.
+"run_pipeline.py" = ["BLE001", "B007"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "api"]
+force-sort-within-sections = true
+
+[tool.pytest.ini_options]
+# ── Pytest configuration ──────────────────────────────────────────────────────
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+filterwarnings = [
+    # Suppress noisy third-party deprecation warnings that are not our code.
+    "ignore::DeprecationWarning:pyparsing",
+    "ignore::DeprecationWarning:shap",
+    "ignore::UserWarning:pydantic",
+]

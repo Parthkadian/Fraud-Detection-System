@@ -11,22 +11,22 @@ Orchestrates the full training loop including:
 - Artefact persistence (model, threshold, metrics)
 """
 
-import time
 import logging
+import time
 
+import mlflow
+import mlflow.sklearn
+import mlflow.xgboost
 import numpy as np
 import pandas as pd
-import mlflow
-import mlflow.xgboost
-import mlflow.sklearn
 from sklearn.model_selection import StratifiedKFold
 
-from src.utils.config_loader import load_yaml_file
-from src.utils.common import save_object, save_json
+from src.evaluation.evaluate import ModelEvaluator
 from src.monitoring.logger import setup_logger
 from src.training.model_factory import ModelFactory
 from src.training.thresholding import ThresholdOptimizer
-from src.evaluation.evaluate import ModelEvaluator
+from src.utils.common import save_json, save_object
+from src.utils.config_loader import load_yaml_file
 
 logger = logging.getLogger("fraud_detection_logger")
 
