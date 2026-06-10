@@ -2358,92 +2358,91 @@ elif active_tab == "📁 Batch CSV Scoring":
         # ── THE BUTTON — appears immediately, before any CSV read ───────────
         if st.button("▶ Run Batch Scoring", use_container_width=True, type="primary"):
             try:
-                progress = st.progress(0, text="Reading CSV (first 5,000 rows)...")
+                CHUNK_SIZE = 200   # rows per API call — keeps each request under 1MB
+                MAX_ROWS   = 1000  # total rows to score — enough for full analytics
+
+                progress = st.progress(0, text="Reading CSV (first 1,000 rows)...")
 
                 # Read CSV ONLY on button click, with strict row cap
-                uploaded_file.seek(0)  # ensure at start of stream
+                uploaded_file.seek(0)
                 input_df = pd.read_csv(uploaded_file, nrows=MAX_ROWS)
                 sample_df = input_df
                 st.session_state.batch_input_df = sample_df
 
-                progress.progress(20, text=f"Loaded {len(sample_df):,} rows. Sending to scoring API...")
+                n_rows   = len(sample_df)
+                n_chunks = max(1, -(-n_rows // CHUNK_SIZE))  # ceiling division
 
-                skeleton_cols = st.columns(2)
-                with skeleton_cols[0]:
-                    st.markdown(
-                        """
-                    <div class="skeleton-analytics">
-                        <div class="skeleton-top">
-                            <div class="skeleton-title">
-                                <div class="skeleton-icon">📈</div>
-                                Loading analytics
-                                <div class="loading-dots">
-                                    <span></span><span></span><span></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="skeleton-line line-1"></div>
-                        <div class="skeleton-line line-2"></div>
-                        <div class="skeleton-chart-row">
-                            <div class="skeleton-bar bar-h1"></div>
-                            <div class="skeleton-bar bar-h2"></div>
-                            <div class="skeleton-bar bar-h3"></div>
-                            <div class="skeleton-bar bar-h4"></div>
-                            <div class="skeleton-bar bar-h5"></div>
-                        </div>
-                    </div>
-                    """,
-                        unsafe_allow_html=True,
-                    )
-                with skeleton_cols[1]:
-                    st.markdown(
-                        """
-                    <div class="skeleton-analytics">
-                        <div class="skeleton-top">
-                            <div class="skeleton-title">
-                                <div class="skeleton-icon">📊</div>
-                                Loading analytics
-                                <div class="loading-dots">
-                                    <span></span><span></span><span></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="skeleton-line line-1"></div>
-                        <div class="skeleton-line line-2"></div>
-                        <div class="skeleton-chart-row">
-                            <div class="skeleton-bar bar-h2"></div>
-                            <div class="skeleton-bar bar-h4"></div>
-                            <div class="skeleton-bar bar-h1"></div>
-                            <div class="skeleton-bar bar-h5"></div>
-                            <div class="skeleton-bar bar-h3"></div>
-                        </div>
-                    </div>
-                    """,
-                        unsafe_allow_html=True,
+                progress.progress(5, text=f"Loaded {n_rows:,} rows → sending in {n_chunks} chunks of {CHUNK_SIZE}...")
+
+                all_results = []
+                chunk_errors = []
+
+                for chunk_idx in range(n_chunks):
+                    start = chunk_idx * CHUNK_SIZE
+                    end   = min(start + CHUNK_SIZE, n_rows)
+                    chunk = sample_df.iloc[start:end]
+
+                    pct  = int(5 + (chunk_idx / n_chunks) * 88)
+                    progress.progress(
+                        pct,
+                        text=f"Scoring rows {start + 1:,}–{end:,} of {n_rows:,} "
+                             f"(chunk {chunk_idx + 1}/{n_chunks})..."
                     )
 
-                progress.progress(40, text="Sending request to fraud scoring API...")
-                response = requests.post(
-                    f"{API_BASE_URL}/predict_batch",
-                    json=sample_df.to_dict(orient="records"),
-                    timeout=300,
-                )
-                progress.progress(80, text="Receiving results and building analytics...")
-                time.sleep(0.1)
-                progress.progress(100, text="Completed ✅")
+                    try:
+                        resp = requests.post(
+                            f"{API_BASE_URL}/predict_batch",
+                            json=chunk.to_dict(orient="records"),
+                            timeout=90,   # each small chunk should finish in <30s
+                        )
+                        if resp.status_code == 200:
+                            all_results.extend(resp.json())
+                        else:
+                            chunk_errors.append(
+                                f"Chunk {chunk_idx + 1}: API returned {resp.status_code}"
+                            )
+                    except requests.exceptions.Timeout:
+                        chunk_errors.append(
+                            f"Chunk {chunk_idx + 1}: timed out — Railway may be waking up. "
+                            "Try again in 30s."
+                        )
+                        break
+                    except requests.exceptions.ConnectionError:
+                        chunk_errors.append(
+                            f"Chunk {chunk_idx + 1}: connection refused — backend may be sleeping."
+                        )
+                        break
 
-                if response.status_code == 200:
-                    result_df = pd.DataFrame(response.json())
+                progress.progress(95, text="Building analytics dashboard...")
+
+                if chunk_errors:
+                    for err in chunk_errors:
+                        st.warning(f"⚠️ {err}")
+
+                if all_results:
+                    result_df = pd.DataFrame(all_results)
                     if "transaction_memo" in sample_df.columns and len(result_df) == len(sample_df):
                         result_df["transaction_memo"] = sample_df["transaction_memo"].values
                     st.session_state.batch_result_df = result_df
                     st.session_state["batch_final_df"] = result_df
-                    st.success(f"✅ Scored {len(result_df):,} transactions!")
+                    progress.progress(100, text="Completed ✅")
+                    st.success(
+                        f"✅ Scored **{len(result_df):,}** transactions "
+                        f"({n_chunks} chunk{'s' if n_chunks > 1 else ''} sent to Railway API)"
+                    )
+                elif not chunk_errors:
+                    st.error("No results returned from the API. Check that the Railway backend is running.")
                 else:
-                    st.error(f"API error {response.status_code}: {response.text}")
+                    st.error(
+                        "❌ **Scoring failed.** The Railway backend returned a 502 error — this usually means:\n\n"
+                        "1. **Railway is sleeping** (free tier sleeps after inactivity) — wait 30s and try again\n"
+                        "2. **Backend is overloaded** — try again in a minute\n\n"
+                        f"Visit [{API_BASE_URL}/health]({API_BASE_URL}/health) to check API status."
+                    )
 
             except Exception as e:
                 st.error(f"Batch scoring failed: {e}")
+
 
         # ── Results (shown from session state, persists across reruns) ───────
         if st.session_state.get("batch_result_df") is not None:
