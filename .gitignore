@@ -25,6 +25,8 @@ audit_log.db
 data/raw/
 data/interim/
 *.csv
+# Exception: lightweight drift reference snapshot (synthetic, ~150 KB)
+!data/drift_reference.csv
 
 # =========================
 # Python Cache
