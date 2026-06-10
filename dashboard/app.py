@@ -2372,6 +2372,36 @@ elif active_tab == "📁 Batch CSV Scoring":
                 n_rows   = len(sample_df)
                 n_chunks = max(1, -(-n_rows // CHUNK_SIZE))  # ceiling division
 
+                # ── Railway wake-up preflight ─────────────────────────────────
+                # Railway free tier sleeps after inactivity (cold start = 20-40s).
+                # Ping /health first and retry until awake before sending data.
+                progress.progress(2, text="⏳ Waking up Railway backend (free tier may be sleeping)...")
+                _api_awake = False
+                _wake_status = st.empty()
+                for _attempt in range(12):  # up to 60s total
+                    try:
+                        _ping = requests.get(f"{API_BASE_URL}/health", timeout=8)
+                        if _ping.status_code == 200:
+                            _api_awake = True
+                            _wake_status.success("✅ Railway API is awake and ready.")
+                            break
+                    except Exception:
+                        pass
+                    _wait = (_attempt + 1) * 5
+                    _wake_status.info(
+                        f"⏳ Railway is waking up... ({_wait}s elapsed). "
+                        "Free-tier cold start takes up to 60s."
+                    )
+                    time.sleep(5)
+
+                if not _api_awake:
+                    _wake_status.error(
+                        "❌ **Railway API did not respond after 60s.** "
+                        "It may be down or the URL may be wrong. "
+                        f"Check: [{API_BASE_URL}/health]({API_BASE_URL}/health)"
+                    )
+                    st.stop()
+
                 progress.progress(5, text=f"Loaded {n_rows:,} rows → sending in {n_chunks} chunks of {CHUNK_SIZE}...")
 
                 all_results = []
