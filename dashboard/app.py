@@ -1593,7 +1593,7 @@ except Exception:
 
 with left:
     st.markdown(
-        f"""
+        """
     <div class="hero-card">
         <div class="info-chip">🛡️ Highland Fraud Shield &nbsp;·&nbsp; v2.0 &nbsp;·&nbsp; FCA Compliant</div>
         <div class="hero-headline">
