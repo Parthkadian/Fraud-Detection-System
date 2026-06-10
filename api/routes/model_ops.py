@@ -31,6 +31,9 @@ router = APIRouter(prefix="/model", tags=["Model Operations"])
 # Path to the model card JSON (relative to project root / CWD)
 _MODEL_CARD_PATH = Path("docs/model_card.json")
 
+# Path to the training metrics JSON (relative to project root / CWD)
+_METRICS_PATH = Path("models/artifacts/metrics.json")
+
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -45,6 +48,21 @@ def _load_model_card() -> dict[str, Any]:
                 return json.load(fh)
     except Exception as exc:
         logger.warning(f"Could not read model card at '{_MODEL_CARD_PATH}': {exc}")
+    return {}
+
+
+def _load_training_metrics() -> dict[str, Any]:
+    """
+    Load and parse models/artifacts/metrics.json produced by the training pipeline.
+    Returns an empty dict if the file is missing or malformed.
+    This file is committed to the repository and is always present in the deployed container.
+    """
+    try:
+        if _METRICS_PATH.exists():
+            with open(_METRICS_PATH, "r", encoding="utf-8") as fh:
+                return json.load(fh)
+    except Exception as exc:
+        logger.warning(f"Could not read training metrics at '{_METRICS_PATH}': {exc}")
     return {}
 
 
@@ -70,13 +88,19 @@ def _get_live_model_state() -> tuple[str | None, float | None, int | None]:
 
 def _extract_metadata(card: dict) -> dict[str, Any]:
     """
-    Pull the flat metadata fields that both endpoints share from the model card.
+    Pull the flat metadata fields that both endpoints share.
+    Priority order for metrics:
+      1. models/artifacts/metrics.json  (training pipeline output, always committed)
+      2. docs/model_card.json           (manually maintained model card)
     Falls back to safe defaults for every field independently.
     """
     details  = card.get("model_details", {})
     perf     = card.get("model_performance", {})
-    metrics  = perf.get("metrics", {})
+    card_metrics = perf.get("metrics", {})
     dt       = perf.get("decision_threshold", {})
+
+    # Load training metrics (primary source for all numeric metrics)
+    training_metrics = _load_training_metrics()
 
     # Live model may override version / threshold / feature_count
     live_version, live_threshold, live_feature_count = _get_live_model_state()
@@ -87,8 +111,17 @@ def _extract_metadata(card: dict) -> dict[str, Any]:
     threshold = live_threshold if live_threshold is not None \
                 else dt.get("value")                           or None
 
-    # Feature count: live predictor > card > sensible default (30 = V1-V28 + Time + Amount)
+    # Feature count: live predictor > card > sensible default
     feature_count = live_feature_count or None
+
+    # Metrics: training_metrics.json takes priority over model_card.json
+    def _pick(key_train: str, key_card: str | None = None):
+        v = training_metrics.get(key_train)
+        if v is not None:
+            return v
+        if key_card:
+            return card_metrics.get(key_card)
+        return None
 
     return {
         "version":       version,
@@ -96,11 +129,15 @@ def _extract_metadata(card: dict) -> dict[str, Any]:
         "trained_on":    trained_on,
         "threshold":     threshold,
         "feature_count": feature_count,
-        # Performance metrics — all optional, None if not in card
-        "auc":       metrics.get("roc_auc"),
-        "precision": metrics.get("precision"),
-        "recall":    metrics.get("recall"),
-        "f1_score":  metrics.get("f1_score"),
+        # Performance metrics — training pipeline output has priority
+        "auc":       _pick("roc_auc"),
+        "precision": _pick("precision"),
+        "recall":    _pick("recall"),
+        "f1_score":  _pick("f1_score"),
+        "mcc":       _pick("mcc"),
+        "pr_auc":    _pick("pr_auc"),
+        "accuracy":  _pick("accuracy"),
+        "cohen_kappa": _pick("cohen_kappa"),
     }
 
 
@@ -189,5 +226,9 @@ def get_model_performance(
         "precision":     meta["precision"],
         "recall":        meta["recall"],
         "f1_score":      meta["f1_score"],
+        "mcc":           meta["mcc"],
+        "pr_auc":        meta["pr_auc"],
+        "accuracy":      meta["accuracy"],
+        "cohen_kappa":   meta["cohen_kappa"],
         "feature_count": meta["feature_count"],
     }

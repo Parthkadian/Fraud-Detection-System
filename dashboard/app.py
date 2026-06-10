@@ -1287,17 +1287,16 @@ with st.sidebar:
     st.markdown("#### 🏆 Model Performance")
     _mperf = {"F1": "N/A", "ROC-AUC": "N/A", "MCC": "N/A", "PR-AUC": "N/A"}
     try:
-        import json as _jj
-        import os as _os
-        _mp = "models/artifacts/metrics.json"
-        if _os.path.exists(_mp):
-            with open(_mp) as _mf:
-                _mm = _jj.load(_mf)
+        _mp_resp = requests.get(f"{API_BASE_URL}/model/performance", timeout=5)
+        if _mp_resp.status_code == 200:
+            _mm = _mp_resp.json()
+            def _fmt(v):
+                return str(round(v, 4)) if v is not None else "N/A"
             _mperf = {
-                "F1":      str(_mm.get("f1_score", "N/A")),
-                "ROC-AUC": str(_mm.get("roc_auc", "N/A")),
-                "MCC":     str(_mm.get("mcc", "N/A")),
-                "PR-AUC":  str(_mm.get("pr_auc", "N/A")),
+                "F1":      _fmt(_mm.get("f1_score")),
+                "ROC-AUC": _fmt(_mm.get("auc")),
+                "MCC":     _fmt(_mm.get("mcc")),
+                "PR-AUC":  _fmt(_mm.get("pr_auc")),
             }
     except Exception:
         pass
@@ -2847,7 +2846,14 @@ elif active_tab == "💬 NLP Insights":
 
     if st.button("Generate Word Clouds", use_container_width=True):
         import numpy as np
-        from wordcloud import WordCloud
+        try:
+            from wordcloud import WordCloud
+        except ImportError:
+            st.error(
+                "❌ **wordcloud** package is not installed on this server. "
+                "Please add `wordcloud` to the dashboard `requirements.txt` and redeploy."
+            )
+            st.stop()
 
         if batch_df_available:
             # ── Use real uploaded + scored data ─────────────────────
@@ -2941,61 +2947,74 @@ elif active_tab == "📊 Model Performance":
     st.markdown('<div class="section-subtitle">Stored model evaluation metrics from the latest training run.</div>', unsafe_allow_html=True)
 
     try:
-        import json
-        metrics_path = "models/artifacts/metrics.json"
-        if os.path.exists(metrics_path):
-            with open(metrics_path, "r") as f:
-                metrics = json.load(f)
+        # ── Primary: fetch from API (which reads models/artifacts/metrics.json) ──
+        _perf_resp = requests.get(f"{API_BASE_URL}/model/performance", timeout=10)
+        if _perf_resp.status_code == 200:
+            metrics = _perf_resp.json()
 
             # KPI cards
             m1, m2, m3, m4 = st.columns(4)
+            def _fmt_metric(v):
+                if v is None:
+                    return "N/A"
+                try:
+                    return f"{float(v):.4f}"
+                except Exception:
+                    return str(v)
+
             with m1:
                 st.markdown(f'''
                 <div class="kpi-card">
                     <div class="kpi-top"><span class="kpi-icon">🎯</span><span class="kpi-label">F1 Score</span></div>
-                    <h2>{metrics.get("f1_score", "N/A")}</h2>
+                    <h2>{_fmt_metric(metrics.get("f1_score"))}</h2>
                 </div>''', unsafe_allow_html=True)
             with m2:
                 st.markdown(f'''
                 <div class="kpi-card">
                     <div class="kpi-top"><span class="kpi-icon">📊</span><span class="kpi-label">ROC-AUC</span></div>
-                    <h2>{metrics.get("roc_auc", "N/A")}</h2>
+                    <h2>{_fmt_metric(metrics.get("auc"))}</h2>
                 </div>''', unsafe_allow_html=True)
             with m3:
                 st.markdown(f'''
                 <div class="kpi-card">
                     <div class="kpi-top"><span class="kpi-icon">🔬</span><span class="kpi-label">MCC</span></div>
-                    <h2>{metrics.get("mcc", "N/A")}</h2>
+                    <h2>{_fmt_metric(metrics.get("mcc"))}</h2>
                 </div>''', unsafe_allow_html=True)
             with m4:
                 st.markdown(f'''
                 <div class="kpi-card">
                     <div class="kpi-top"><span class="kpi-icon">📈</span><span class="kpi-label">PR-AUC</span></div>
-                    <h2>{metrics.get("pr_auc", "N/A")}</h2>
+                    <h2>{_fmt_metric(metrics.get("pr_auc"))}</h2>
                 </div>''', unsafe_allow_html=True)
 
             st.markdown("---")
 
-            # Full metrics table
-            display_metrics = {k: v for k, v in metrics.items() if k not in ["confusion_matrix", "classification_report"]}
+            # Full metrics table (exclude complex nested fields)
+            _exclude = {"confusion_matrix", "classification_report"}
+            display_metrics = {k: v for k, v in metrics.items() if k not in _exclude and v is not None}
             st.markdown("### All Metrics")
             metrics_df = pd.DataFrame(list(display_metrics.items()), columns=["Metric", "Value"])
             st.dataframe(metrics_df, use_container_width=True)
 
-            # Confusion Matrix
-            if "confusion_matrix" in metrics:
+            # Confusion Matrix (from API if available, else skip)
+            _cm = metrics.get("confusion_matrix")
+            if _cm:
                 st.markdown("### Confusion Matrix")
-                cm = metrics["confusion_matrix"]
-                cm_df = pd.DataFrame(cm, index=["Actual: Not Fraud", "Actual: Fraud"], columns=["Pred: Not Fraud", "Pred: Fraud"])
+                cm_df = pd.DataFrame(
+                    _cm,
+                    index=["Actual: Not Fraud", "Actual: Fraud"],
+                    columns=["Pred: Not Fraud", "Pred: Fraud"],
+                )
                 st.dataframe(cm_df, use_container_width=True)
 
-            # Classification Report
-            if "classification_report" in metrics:
+            # Classification report
+            _cr = metrics.get("classification_report")
+            if _cr:
                 st.markdown("### Classification Report")
-                st.code(metrics["classification_report"], language="text")
+                st.code(_cr, language="text")
 
-            # CV metrics if available
-            cv_keys = [k for k in metrics if k.startswith("cv_")]
+            # CV metrics
+            cv_keys = [k for k in metrics if str(k).startswith("cv_")]
             if cv_keys:
                 st.markdown("### Cross-Validation Results")
                 cv_data = {k: metrics[k] for k in cv_keys}
@@ -3042,7 +3061,8 @@ elif active_tab == "📊 Model Performance":
                 st.info(f"Calibration plot unavailable: {e}")
 
         else:
-            st.warning("No metrics file found. Run the training pipeline first.")
+            st.warning(f"⚠️ Could not load metrics from API (status {_perf_resp.status_code}). "
+                       "Ensure the backend is running and reachable.")
     except Exception as e:
         st.error(f"Failed to load metrics: {e}")
 
