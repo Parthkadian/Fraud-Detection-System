@@ -115,7 +115,7 @@ def get_conn() -> Generator[Any, None, None]:
             rows = conn.execute("SELECT * FROM cases WHERE id = ?", (id,)).fetchall()
     """
     if _USE_POSTGRES:
-        conn = _PgConn(psycopg2.connect(DATABASE_URL))
+        conn = _PgConn(psycopg2.connect(DATABASE_URL, connect_timeout=5))
         try:
             yield conn
             conn.commit()

@@ -100,63 +100,20 @@ def _get_last_prediction_time() -> str | None:
 
 @router.get(
     "/health",
-    response_model=HealthResponse,
     summary="API health check",
-    description=(
-        "Returns the overall health of the API including model load status, "
-        "database connectivity, uptime, and environment. "
-        "Always responds — never raises an error — so it is safe to use as a "
-        "liveness probe in Docker / Kubernetes / Railway."
-    ),
 )
 def health_check():
-    """
-    Liveness and readiness probe.
+    """Fast liveness probe — always returns 200 immediately."""
+    state = _get_main_state()
+    uptime_seconds = round(time.monotonic() - _MODULE_START, 1)
 
-    Returns:
-        status              – "healthy" | "unhealthy" | "degraded"
-        model_loaded        – whether the ML model initialised successfully
-        error               – model load error message, or null
-        api_status          – always "ok" if this endpoint responds
-        model_error         – alias of error field for clarity
-        redis_status        – "unavailable" (Redis is optional in this deployment)
-        database_status     – "ok" | "error" based on a lightweight DB probe
-        uptime_seconds      – seconds since this module was first imported
-        model_version       – version string of the loaded model, or null
-        environment         – value of the ENVIRONMENT env var (default "development")
-        last_prediction_time– ISO-8601 UTC timestamp of the most recent prediction
-    """
-    state           = _get_main_state()
-    database_status = _get_database_status()
-    uptime_seconds  = round(time.monotonic() - _MODULE_START, 1)
-
-    model_loaded  = state["model_loaded"]
-    model_error   = state["model_error"]
-    model_version = state["model_version"]
-
-    # Degraded = model fine but DB unhealthy; Unhealthy = model not loaded
-    if not model_loaded:
-        status = "unhealthy"
-    elif database_status != "ok":
-        status = "degraded"
-    else:
-        status = "healthy"
-
-    last_prediction_time = _get_last_prediction_time()
-
-    return HealthResponse(
-        status               = status,
-        model_loaded         = model_loaded,
-        error                = model_error,
-        api_status           = "ok",
-        model_error          = model_error,
-        redis_status         = "unavailable",
-        database_status      = database_status,
-        uptime_seconds       = uptime_seconds,
-        model_version        = model_version,
-        environment          = os.getenv("ENVIRONMENT", "development"),
-        last_prediction_time = last_prediction_time,
-    )
+    return {
+        "status": "ok",
+        "model_loaded": state["model_loaded"],
+        "model_error": state["model_error"],
+        "uptime_seconds": uptime_seconds,
+        "environment": os.getenv("ENVIRONMENT", "development"),
+    }
 
 
 # ══════════════════════════════════════════════════════════════════════════ #
