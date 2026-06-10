@@ -1,0 +1,13 @@
+[server]
+maxUploadSize = 200
+enableCORS = false
+enableXsrfProtection = false
+headless = true
+port = 8501
+address = "0.0.0.0"
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "dark"

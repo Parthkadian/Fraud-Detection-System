@@ -2717,8 +2717,31 @@ elif active_tab == "🌊 Data Drift Monitor":
 
         # ── Button appears immediately — CSV read happens inside ────────────
         if st.button("▶ Generate Drift Report", use_container_width=True, type="primary"):
-            with st.spinner("Reading CSV and analysing drift vs reference training data..."):
-                try:
+            try:
+                # Wake-up preflight
+                _dw = st.empty()
+                _dw.info("⏳ Checking Railway API status...")
+                _d_awake = False
+                for _da in range(12):
+                    try:
+                        _dp = requests.get(f"{API_BASE_URL}/health", timeout=8)
+                        if _dp.status_code == 200:
+                            _d_awake = True
+                            _dw.success("✅ Railway API is awake.")
+                            break
+                    except Exception:
+                        pass
+                    _dw.info(f"⏳ Waking up Railway API... ({(_da + 1) * 5}s elapsed, max 60s)")
+                    time.sleep(5)
+
+                if not _d_awake:
+                    _dw.error(
+                        f"❌ Railway API unreachable after 60s. "
+                        f"Check: [{API_BASE_URL}/health]({API_BASE_URL}/health)"
+                    )
+                    st.stop()
+
+                with st.spinner("Reading CSV and analysing drift vs reference training data..."):
                     drift_file.seek(0)
                     drift_df = pd.read_csv(drift_file, nrows=DRIFT_MAX)
                     st.info(f"📄 Loaded {len(drift_df):,} rows for drift analysis.")
@@ -2727,18 +2750,29 @@ elif active_tab == "🌊 Data Drift Monitor":
                     drift_response = requests.post(
                         f"{API_BASE_URL}/drift_report",
                         json=payload,
-                        timeout=180,  # increased from 60s — Evidently needs more time
+                        timeout=300,  # Evidently report can take 2-3 min on free tier
                     )
-                    
+
                     if drift_response.status_code == 200:
-                        st.success("Report generated successfully!")
+                        st.success("✅ Drift report generated!")
                         html_content = drift_response.text
                         import streamlit.components.v1 as components
                         components.html(html_content, height=1000, scrolling=True)
+                    elif drift_response.status_code == 502:
+                        st.error(
+                            "❌ **502 Gateway Timeout** — Evidently report generation exceeded "
+                            "Railway's response time limit. Try with fewer rows or try again."
+                        )
                     else:
-                        st.error(f"Drift API error: {drift_response.text}")
-                except Exception as e:
-                    st.error(f"Report generation failed: {str(e)}")
+                        st.error(f"Drift API error {drift_response.status_code}: {drift_response.text}")
+            except requests.exceptions.Timeout:
+                st.error(
+                    "❌ **Request timed out.** Evidently takes 2-3 min on Railway free tier. "
+                    "Please try again."
+                )
+            except Exception as e:
+                st.error(f"Report generation failed: {e}")
+
 
 elif active_tab == "🔁 Live Async Stream":
     st.markdown('<div class="section-title">Live Async Stream Simulator</div>', unsafe_allow_html=True)
