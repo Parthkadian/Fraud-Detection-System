@@ -2316,28 +2316,34 @@ elif active_tab == "📁 Batch CSV Scoring":
         st.code("Time, V1, V2, ... V28, Amount", language="text")
 
     if uploaded_file is not None:
-        input_df = pd.read_csv(uploaded_file)
+        # ── Large-file safe read: NEVER load entire file into RAM ────────────
+        # Render free tier has ~512MB RAM. A 143MB CSV fully loaded = ~1.2GB RAM → crash.
+        # We read only up to MAX_ROWS directly using nrows= to avoid the OOM.
+        MAX_ROWS = 5000
+
+        file_size_mb = uploaded_file.size / (1024 * 1024)
+        if file_size_mb > 10:
+            st.warning(
+                f"⚠️ **Large file detected** ({file_size_mb:.1f} MB). "
+                f"To protect the server, only the first **{MAX_ROWS:,} rows** will be loaded and scored. "
+                "This is sufficient for full fraud analytics. "
+                "You can download the scored subset after processing."
+            )
+
+        try:
+            input_df = pd.read_csv(uploaded_file, nrows=MAX_ROWS)
+        except Exception as read_err:
+            st.error(f"❌ Failed to read CSV: {read_err}")
+            st.stop()
 
         st.markdown("### Preview")
         st.dataframe(input_df.head(), use_container_width=True)
+        st.info(f"📄 Loaded **{len(input_df):,} rows** × {len(input_df.columns)} columns for scoring.")
 
         if "batch_result_df" not in st.session_state:
             st.session_state.batch_result_df = None
 
-        # ── Large-file guard ─────────────────────────────────────────
-        MAX_ROWS = 5000
-        total_rows = len(input_df)
-        if total_rows > MAX_ROWS:
-            st.warning(
-                f"⚠️ Your CSV has **{total_rows:,} rows**. "
-                f"Scoring all rows would take ~{total_rows // 60:,} minutes. "
-                f"Auto-sampling **{MAX_ROWS:,} rows** for fast analysis. "
-                "You can download the full scored file after."
-            )
-            sample_df = input_df.sample(n=MAX_ROWS, random_state=42).reset_index(drop=True)
-            st.info(f"🔀 Sampled {MAX_ROWS:,} rows from {total_rows:,} total.")
-        else:
-            sample_df = input_df
+        sample_df = input_df  # already limited to MAX_ROWS at read time
 
         if st.button("Run Batch Prediction", use_container_width=True):
             try:
@@ -2586,7 +2592,7 @@ elif active_tab == "📁 Batch CSV Scoring":
             selected_index = st.number_input(
                 "Enter row index to explain",
                 min_value=0,
-                max_value=len(sample_df) - 1 if 'sample_df' in dir() else len(input_df) - 1,
+                max_value=max(0, len(input_df) - 1),
                 value=0,
                 step=1,
             )
@@ -2627,17 +2633,25 @@ elif active_tab == "🌊 Data Drift Monitor":
     st.markdown('<div class="section-subtitle">Upload a CSV representing "Recent Production Data" to check for feature drift.</div>', unsafe_allow_html=True)
     
     drift_file = st.file_uploader("Upload Production CSV", type=["csv"], key="drift_uploader")
-    
-    if drift_file is not None:
-        drift_df = pd.read_csv(drift_file)
 
+    if drift_file is not None:
+        # ── Large-file safe read ──────────────────────────────────────────
         DRIFT_MAX = 2000
-        if len(drift_df) > DRIFT_MAX:
-            st.info(
-                f"ℹ️ Large file detected ({len(drift_df):,} rows). "
-                f"Sampling {DRIFT_MAX:,} rows for drift analysis (Evidently works best with ~1k-2k rows)."
+        drift_size_mb = drift_file.size / (1024 * 1024)
+        if drift_size_mb > 5:
+            st.warning(
+                f"⚠️ **Large file detected** ({drift_size_mb:.1f} MB). "
+                f"Loading only the first **{DRIFT_MAX:,} rows** — Evidently drift analysis works best "
+                "with 1k–2k rows and this protects the server from memory overload."
             )
-            drift_df = drift_df.sample(n=DRIFT_MAX, random_state=42).reset_index(drop=True)
+
+        try:
+            drift_df = pd.read_csv(drift_file, nrows=DRIFT_MAX)
+        except Exception as drift_read_err:
+            st.error(f"❌ Failed to read CSV: {drift_read_err}")
+            st.stop()
+
+        st.info(f"📄 Loaded **{len(drift_df):,} rows** for drift analysis.")
 
         if st.button("Generate Drift Report", use_container_width=True):
             with st.spinner("Analyzing production data vs reference training data... Generating HTML Report..."):
