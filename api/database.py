@@ -714,8 +714,8 @@ def get_dashboard_summary() -> dict:
                 SUM(CASE WHEN risk_level='LOW'    THEN 1 ELSE 0 END) AS low_risk_today,
                 ROUND(AVG(latency_ms), 2)                         AS average_latency_ms
             FROM predictions
-            WHERE DATE(created_at) = ?
-        """, (today,)).fetchone()
+            WHERE created_at LIKE ?
+        """, (f"{today}%",)).fetchone()
 
         totals = dict(row) if row else {}
 
@@ -967,8 +967,8 @@ def get_business_impact() -> dict:
                 ROUND(SUM(blocked_loss), 2)        AS blocked_loss_today,
                 ROUND(SUM(false_positive_cost), 2) AS estimated_false_positive_cost
             FROM predictions
-            WHERE DATE(created_at) = ?
-        """, (today,)).fetchone()
+            WHERE created_at LIKE ?
+        """, (f"{today}%",)).fetchone()
 
         fraud_row = conn.execute("""
             SELECT ROUND(SUM(p.amount), 2) AS confirmed_fraud_loss

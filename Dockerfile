@@ -18,5 +18,5 @@ COPY . .
 # Expose both API (8000) and Streamlit (8501) ports
 EXPOSE 8000 8501
 
-# Default: run the FastAPI backend
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default: run the FastAPI backend, reading from the PORT environment variable if set
+CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

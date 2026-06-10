@@ -103,7 +103,7 @@ st.set_page_config(
 
 API_BASE_URL = os.getenv(
     "API_BASE_URL",
-    "http://localhost:8000"
+    "https://fraud-detection-system-wyee.onrender.com"
 )
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "dark"
