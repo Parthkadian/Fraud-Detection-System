@@ -2316,39 +2316,52 @@ elif active_tab == "📁 Batch CSV Scoring":
         st.code("Time, V1, V2, ... V28, Amount", language="text")
 
     if uploaded_file is not None:
-        # ── Large-file safe read: NEVER load entire file into RAM ────────────
-        # Render free tier has ~512MB RAM. A 143MB CSV fully loaded = ~1.2GB RAM → crash.
-        # We read only up to MAX_ROWS directly using nrows= to avoid the OOM.
         MAX_ROWS = 5000
-
         file_size_mb = uploaded_file.size / (1024 * 1024)
+
+        # ── File info banner (no CSV read — just metadata) ──────────────────
+        st.markdown(
+            f"""
+            <div style='display:flex;align-items:center;gap:14px;padding:14px 18px;
+                border-radius:16px;background:rgba(255,255,255,0.04);
+                border:1px solid rgba(212,175,55,0.2);margin:12px 0;'>
+                <span style='font-size:1.6rem;'>📂</span>
+                <div>
+                    <div style='font-weight:800;font-size:1rem;'>{uploaded_file.name}</div>
+                    <div style='color:#94A3B8;font-size:0.87rem;'>
+                        {file_size_mb:.1f} MB uploaded · First <b>{MAX_ROWS:,} rows</b> will be scored
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         if file_size_mb > 10:
             st.warning(
-                f"⚠️ **Large file detected** ({file_size_mb:.1f} MB). "
-                f"To protect the server, only the first **{MAX_ROWS:,} rows** will be loaded and scored. "
-                "This is sufficient for full fraud analytics. "
-                "You can download the scored subset after processing."
+                f"⚠️ **Large file ({file_size_mb:.1f} MB).** To protect the server only the first "
+                f"**{MAX_ROWS:,} rows** will be read. Click **Run Batch Scoring** below to start."
             )
-
-        try:
-            input_df = pd.read_csv(uploaded_file, nrows=MAX_ROWS)
-        except Exception as read_err:
-            st.error(f"❌ Failed to read CSV: {read_err}")
-            st.stop()
-
-        st.markdown("### Preview")
-        st.dataframe(input_df.head(), use_container_width=True)
-        st.info(f"📄 Loaded **{len(input_df):,} rows** × {len(input_df.columns)} columns for scoring.")
 
         if "batch_result_df" not in st.session_state:
             st.session_state.batch_result_df = None
+        if "batch_input_df" not in st.session_state:
+            st.session_state.batch_input_df = None
 
-        sample_df = input_df  # already limited to MAX_ROWS at read time
-
-        if st.button("Run Batch Prediction", use_container_width=True):
+        # ── THE BUTTON — appears immediately, before any CSV read ───────────
+        if st.button("▶ Run Batch Scoring", use_container_width=True, type="primary"):
             try:
-                skeleton_cols = st.columns(2)
+                progress = st.progress(0, text="Reading CSV (first 5,000 rows)...")
 
+                # Read CSV ONLY on button click, with strict row cap
+                uploaded_file.seek(0)  # ensure at start of stream
+                input_df = pd.read_csv(uploaded_file, nrows=MAX_ROWS)
+                sample_df = input_df
+                st.session_state.batch_input_df = sample_df
+
+                progress.progress(20, text=f"Loaded {len(sample_df):,} rows. Sending to scoring API...")
+
+                skeleton_cols = st.columns(2)
                 with skeleton_cols[0]:
                     st.markdown(
                         """
@@ -2375,7 +2388,6 @@ elif active_tab == "📁 Batch CSV Scoring":
                     """,
                         unsafe_allow_html=True,
                     )
-
                 with skeleton_cols[1]:
                     st.markdown(
                         """
@@ -2403,36 +2415,37 @@ elif active_tab == "📁 Batch CSV Scoring":
                         unsafe_allow_html=True,
                     )
 
-                progress = st.progress(0, text="Processing transactions...")
-
-                progress.progress(15, text="Serialising uploaded transactions...")
-                time.sleep(0.12)
-                progress.progress(35, text="Sending request to fraud scoring API...")
+                progress.progress(40, text="Sending request to fraud scoring API...")
                 response = requests.post(
                     f"{API_BASE_URL}/predict_batch",
                     json=sample_df.to_dict(orient="records"),
                     timeout=300,
                 )
-                progress.progress(75, text="Receiving results and building analytics...")
-                time.sleep(0.12)
+                progress.progress(80, text="Receiving results and building analytics...")
+                time.sleep(0.1)
                 progress.progress(100, text="Completed ✅")
 
                 if response.status_code == 200:
                     result_df = pd.DataFrame(response.json())
-                    # Merge transaction_memo from input_df if present
                     if "transaction_memo" in sample_df.columns and len(result_df) == len(sample_df):
                         result_df["transaction_memo"] = sample_df["transaction_memo"].values
                     st.session_state.batch_result_df = result_df
                     st.session_state["batch_final_df"] = result_df
+                    st.success(f"✅ Scored {len(result_df):,} transactions!")
                 else:
-                    st.error(f"API error: {response.text}")
-
+                    st.error(f"API error {response.status_code}: {response.text}")
 
             except Exception as e:
-                st.error(f"Batch request failed: {e}")
+                st.error(f"Batch scoring failed: {e}")
 
-        if st.session_state.batch_result_df is not None:
+        # ── Results (shown from session state, persists across reruns) ───────
+        if st.session_state.get("batch_result_df") is not None:
             final_df = st.session_state.batch_result_df
+            input_df  = st.session_state.get("batch_input_df", final_df)
+            sample_df = input_df
+
+            st.markdown("### Preview of uploaded data")
+            st.dataframe(input_df.head(), use_container_width=True)
 
             st.markdown(
                 f"""
@@ -2592,7 +2605,7 @@ elif active_tab == "📁 Batch CSV Scoring":
             selected_index = st.number_input(
                 "Enter row index to explain",
                 min_value=0,
-                max_value=max(0, len(input_df) - 1),
+                max_value=max(0, len(final_df) - 1),
                 value=0,
                 step=1,
             )
@@ -2604,7 +2617,12 @@ elif active_tab == "📁 Batch CSV Scoring":
 
             if st.button("Explain Selected Row", use_container_width=True):
                 try:
-                    selected_row = input_df.iloc[int(selected_index)].to_dict()
+                    selected_row = final_df.iloc[int(selected_index)].drop(
+                        labels=[c for c in ["prediction", "fraud_probability", "risk_level",
+                                            "transaction_memo", "rule_triggered"]
+                                if c in final_df.columns],
+                        errors="ignore"
+                    ).to_dict()
                     explain_response = requests.post(
                         f"{API_BASE_URL}/explain",
                         json=selected_row,
@@ -2635,27 +2653,40 @@ elif active_tab == "🌊 Data Drift Monitor":
     drift_file = st.file_uploader("Upload Production CSV", type=["csv"], key="drift_uploader")
 
     if drift_file is not None:
-        # ── Large-file safe read ──────────────────────────────────────────
         DRIFT_MAX = 2000
         drift_size_mb = drift_file.size / (1024 * 1024)
+
+        # ── File info (no CSV read yet) ─────────────────────────────────────
+        st.markdown(
+            f"""
+            <div style='display:flex;align-items:center;gap:14px;padding:14px 18px;
+                border-radius:16px;background:rgba(255,255,255,0.04);
+                border:1px solid rgba(212,175,55,0.2);margin:12px 0;'>
+                <span style='font-size:1.6rem;'>📂</span>
+                <div>
+                    <div style='font-weight:800;font-size:1rem;'>{drift_file.name}</div>
+                    <div style='color:#94A3B8;font-size:0.87rem;'>
+                        {drift_size_mb:.1f} MB · First <b>{DRIFT_MAX:,} rows</b> will be analysed
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         if drift_size_mb > 5:
             st.warning(
-                f"⚠️ **Large file detected** ({drift_size_mb:.1f} MB). "
-                f"Loading only the first **{DRIFT_MAX:,} rows** — Evidently drift analysis works best "
-                "with 1k–2k rows and this protects the server from memory overload."
+                f"⚠️ Large file ({drift_size_mb:.1f} MB). Only the first **{DRIFT_MAX:,} rows** will be used "
+                "for drift analysis — Evidently works best with 1k–2k rows."
             )
 
-        try:
-            drift_df = pd.read_csv(drift_file, nrows=DRIFT_MAX)
-        except Exception as drift_read_err:
-            st.error(f"❌ Failed to read CSV: {drift_read_err}")
-            st.stop()
-
-        st.info(f"📄 Loaded **{len(drift_df):,} rows** for drift analysis.")
-
-        if st.button("Generate Drift Report", use_container_width=True):
-            with st.spinner("Analyzing production data vs reference training data... Generating HTML Report..."):
+        # ── Button appears immediately — CSV read happens inside ────────────
+        if st.button("▶ Generate Drift Report", use_container_width=True, type="primary"):
+            with st.spinner("Reading CSV and analysing drift vs reference training data..."):
                 try:
+                    drift_file.seek(0)
+                    drift_df = pd.read_csv(drift_file, nrows=DRIFT_MAX)
+                    st.info(f"📄 Loaded {len(drift_df):,} rows for drift analysis.")
+
                     payload = drift_df.to_dict(orient="records")
                     drift_response = requests.post(
                         f"{API_BASE_URL}/drift_report",
