@@ -37,7 +37,7 @@ _V_STD = {
 }
 _ALL_FEATURE_COLS = ["Time", "Amount"] + list(_V_STD.keys())
 _REFERENCE_SNAPSHOT_PATH = "data/drift_reference.csv"
-_SYNTHETIC_N = 2000  # rows to generate for the synthetic fallback
+_SYNTHETIC_N = 1000  # rows to generate for the synthetic fallback
 
 
 def _build_synthetic_reference(n: int = _SYNTHETIC_N) -> pd.DataFrame:
@@ -89,9 +89,9 @@ class DriftMonitor:
             try:
                 df = pd.read_csv(raw_path)
                 df = df.drop(columns=[c for c in ["Class", "transaction_memo"] if c in df.columns])
-                # Sample for performance — Evidently works well with 1-2 k rows
-                if len(df) > 2000:
-                    df = df.sample(n=2000, random_state=42).reset_index(drop=True)
+                # Sample for performance — Evidently works well with 500-1000 rows
+                if len(df) > 1000:
+                    df = df.sample(n=1000, random_state=42).reset_index(drop=True)
                 self.logger.info(f"Drift reference loaded from raw CSV ({len(df)} rows).")
                 return df
             except Exception as exc:
@@ -101,6 +101,8 @@ class DriftMonitor:
         if os.path.exists(_REFERENCE_SNAPSHOT_PATH):
             try:
                 df = pd.read_csv(_REFERENCE_SNAPSHOT_PATH)
+                if len(df) > 1000:
+                    df = df.sample(n=1000, random_state=42).reset_index(drop=True)
                 self.logger.info(
                     f"Drift reference loaded from committed snapshot "
                     f"({_REFERENCE_SNAPSHOT_PATH}, {len(df)} rows)."

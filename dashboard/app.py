@@ -3596,12 +3596,32 @@ elif active_tab == "⚡ System Health":
                     fig_vol, (ax_v, ax_f) = plt.subplots(2, 1, figsize=(10, 5), sharex=True)
                     style_figure(fig_vol)
 
-                    ax_v.fill_between(range(len(merged_vol)), merged_vol["count"], alpha=0.4, color="#6ee7ff")
-                    ax_v.plot(range(len(merged_vol)), merged_vol["count"], color="#6ee7ff", linewidth=2)
-                    style_plot(ax_v, "Prediction Volume (per minute)", ylabel="Count")
+                    x_labels = merged_vol["minute"].dt.strftime("%H:%M").tolist()
 
-                    ax_f.fill_between(range(len(merged_vol)), merged_vol["fraud_count"], alpha=0.4, color="#f87171")
-                    ax_f.plot(range(len(merged_vol)), merged_vol["fraud_count"], color="#f87171", linewidth=2)
+                    if len(merged_vol) == 1:
+                        # Draw centered bars for single minute prediction logs
+                        ax_v.bar([0], merged_vol["count"], color="#6ee7ff", width=0.2, alpha=0.85)
+                        ax_f.bar([0], merged_vol["fraud_count"], color="#f87171", width=0.2, alpha=0.85)
+                        ax_v.set_xlim(-0.5, 0.5)
+                        ax_f.set_xlim(-0.5, 0.5)
+                    else:
+                        # Draw standard line/area charts for time-series logs
+                        ax_v.fill_between(range(len(merged_vol)), merged_vol["count"], alpha=0.35, color="#6ee7ff")
+                        ax_v.plot(range(len(merged_vol)), merged_vol["count"], color="#6ee7ff", linewidth=2, marker="o", markersize=4)
+
+                        ax_f.fill_between(range(len(merged_vol)), merged_vol["fraud_count"], alpha=0.35, color="#f87171")
+                        ax_f.plot(range(len(merged_vol)), merged_vol["fraud_count"], color="#f87171", linewidth=2, marker="o", markersize=4)
+
+                    # Set standard times on the x-axis
+                    ax_v.set_xticks(range(len(merged_vol)))
+                    ax_v.set_xticklabels(x_labels)
+
+                    # Force integer values on the y-axis ticks
+                    import matplotlib.ticker as ticker
+                    ax_v.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+                    ax_f.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+
+                    style_plot(ax_v, "Prediction Volume (per minute)", ylabel="Count")
                     style_plot(ax_f, "Fraud Detections (per minute)", ylabel="Fraud Count")
 
                     plt.tight_layout()
