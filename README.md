@@ -23,14 +23,38 @@ From raw transactions to ranked fraud insights — with full explainability, dri
 
 <br/>
 
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-Dashboard-22c55e?style=for-the-badge)](https://fraud-detection-system-2-4h2c.onrender.com)
+[![API Docs](https://img.shields.io/badge/📄%20API%20Docs-Swagger%20UI-009688?style=for-the-badge)](https://fraud-detection-system-production-7510.up.railway.app/docs)
+[![API Health](https://img.shields.io/badge/⚡%20API%20Health-Live-00563B?style=for-the-badge)](https://fraud-detection-system-production-7510.up.railway.app/health)
+
+<br/>
+
 > *"Not just a model — a complete fraud intelligence platform built to production engineering standards."*
 
 </div>
 
 ---
 
+## 🚀 Live Deployment
+
+This platform is **fully deployed and publicly accessible** — no setup required.
+
+| Service | URL | Platform |
+|---------|-----|----------|
+| **Dashboard** | [fraud-detection-system-2-4h2c.onrender.com](https://fraud-detection-system-2-4h2c.onrender.com) | Render |
+| **REST API** | [fraud-detection-system-production-7510.up.railway.app](https://fraud-detection-system-production-7510.up.railway.app) | Railway |
+| **Swagger UI** | [/docs](https://fraud-detection-system-production-7510.up.railway.app/docs) | Railway |
+| **API Health** | [/health](https://fraud-detection-system-production-7510.up.railway.app/health) | Railway |
+| **Model Card** | [/model_card](https://fraud-detection-system-production-7510.up.railway.app/model_card) | Railway |
+| **Prometheus Metrics** | [/metrics](https://fraud-detection-system-production-7510.up.railway.app/metrics) | Railway |
+
+> **Note:** Render's free tier spins down after 15 minutes of inactivity. The first request may take 30–60 seconds to cold-start. Subsequent requests are fast.
+
+---
+
 ## Table of Contents
 
+- [Live Deployment](#-live-deployment)
 - [Overview](#overview)
 - [System Architecture](#system-architecture)
 - [Key Capabilities](#key-capabilities)
@@ -70,7 +94,7 @@ Most fraud detection repositories are Jupyter notebooks. This is a **complete, d
 | **Async Processing** | Celery + Redis for non-blocking high-volume batch scoring |
 | **Human Review** | Case management queue for analyst escalation workflows |
 | **Observability** | Prometheus metrics, structured JSON logging, distributed request tracing |
-| **Infrastructure** | Docker Compose multi-service stack, GitHub Actions CI/CD, Railway deployment |
+| **Infrastructure** | Docker Compose multi-service stack, GitHub Actions CI/CD, deployed on Render + Railway |
 
 ---
 
@@ -239,7 +263,7 @@ rules:
 
 ## API Reference
 
-FastAPI v2.0 · Auto-generated interactive docs at **`/docs`** · ReDoc at **`/redoc`**
+FastAPI v2.0 · Live API: **[fraud-detection-system-production-7510.up.railway.app](https://fraud-detection-system-production-7510.up.railway.app)** · Swagger UI: **[/docs](https://fraud-detection-system-production-7510.up.railway.app/docs)** · ReDoc: **[/redoc](https://fraud-detection-system-production-7510.up.railway.app/redoc)**
 
 ### Authentication
 
@@ -305,7 +329,7 @@ Set `FRAUD_API_KEY` environment variable to enable API key authentication. Prote
 ### Example: Score a Transaction
 
 ```bash
-curl -X POST https://your-api-host/predict \
+curl -X POST https://fraud-detection-system-production-7510.up.railway.app/predict \
   -H "Content-Type: application/json" \
   -d '{
     "Time": 10000, "Amount": 150.50,
@@ -337,7 +361,7 @@ curl -X POST https://your-api-host/predict \
 ### Example: SHAP Explanation
 
 ```bash
-curl -X POST https://your-api-host/explain \
+curl -X POST https://fraud-detection-system-production-7510.up.railway.app/explain \
   -H "Content-Type: application/json" \
   -d '{ ... same payload as /predict ... }'
 ```
@@ -380,7 +404,11 @@ The Streamlit dashboard (`dashboard/app.py`) is a premium dark-mode fraud intell
 | 🪪 **Model Card** | Full Google Model Card with intended use, limitations, and ethical considerations |
 | ⚡ **System Health** | Real-time API health, model status, Redis and DB connectivity |
 
-### Running the Dashboard
+### Live Dashboard
+
+> **Try it now (no setup required):** [https://fraud-detection-system-2-4h2c.onrender.com](https://fraud-detection-system-2-4h2c.onrender.com)
+
+### Running Locally
 
 ```bash
 # Ensure API is running first (port 8000)
@@ -414,7 +442,7 @@ Dashboard available at **http://localhost:8501**
 | **Infrastructure** | Docker + Compose | — | Containerised multi-service deployment |
 | **CI/CD** | GitHub Actions | — | Lint, test, Docker build pipeline |
 | **Linting** | Ruff | 0.6.9 | Fast Python linter and formatter |
-| **Deployment** | Railway | — | Cloud API hosting |
+| **Deployment** | Render (Dashboard) + Railway (API) | — | Cloud hosting — fully live |
 
 ---
 
@@ -536,7 +564,11 @@ fraud-detection-system/
 
 ## Quick Start
 
-### Prerequisites
+> **No local setup needed?** The platform is already live:
+> - Dashboard: [fraud-detection-system-2-4h2c.onrender.com](https://fraud-detection-system-2-4h2c.onrender.com)
+> - API: [fraud-detection-system-production-7510.up.railway.app](https://fraud-detection-system-production-7510.up.railway.app)
+
+### Prerequisites (for local development)
 
 | Requirement | Version |
 |-------------|---------|
@@ -599,8 +631,8 @@ The pipeline executes:
 uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-- API: **http://localhost:8000**
-- Swagger UI: **http://localhost:8000/docs**
+- API: **http://localhost:8000** (or live at [railway.app](https://fraud-detection-system-production-7510.up.railway.app))
+- Swagger UI: **http://localhost:8000/docs** (or live at [/docs](https://fraud-detection-system-production-7510.up.railway.app/docs))
 - ReDoc: **http://localhost:8000/redoc**
 
 ### 5. Launch the Dashboard
@@ -609,7 +641,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 streamlit run dashboard/app.py
 ```
 
-- Dashboard: **http://localhost:8501**
+- Dashboard: **http://localhost:8501** (or live at [render.com](https://fraud-detection-system-2-4h2c.onrender.com))
 
 ---
 
